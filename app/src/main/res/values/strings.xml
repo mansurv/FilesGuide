@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">FilesGuide</string>
+    <string name="title_files">Home</string>
+    <string name="title_places">Places</string>
+    <string name="title_logs">Logs</string>
+
+    <string name="permission_required">Write to external storage access is required to save all media files.</string>
+    <string name="ok">OK</string>
+    <string name="permission_granted">Permission is granted. You can use the external storage now.</string>
+</resources>
