@@ -3,12 +3,15 @@ package com.netmontools.filesguide.ui.files.view
 import android.R
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.SparseArray
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.OnBackPressedCallback
+import androidx.annotation.Nullable
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
@@ -25,6 +28,9 @@ import com.netmontools.filesguide.App
 import com.netmontools.filesguide.MainViewModel
 import com.netmontools.filesguide.databinding.FragmentHomeBinding
 import com.netmontools.filesguide.ui.files.model.Folder
+import com.netmontools.filesguide.utils.SimpleUtils
+import java.io.File
+import java.util.Objects
 
 
 class HomeFragment : Fragment() {
@@ -80,10 +86,10 @@ class HomeFragment : Fragment() {
             }
         }
     }
-        override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+    override fun onCreateView(
+    inflater: LayoutInflater,
+    container: ViewGroup?,
+    savedInstanceState: Bundle?
     ): View {
         val homeViewModel =
             ViewModelProvider(this).get(HomeViewModel::class.java)
@@ -97,8 +103,6 @@ class HomeFragment : Fragment() {
         )
         binding.localRefreshLayout.isEnabled = false
 
-
-        binding.localRecyclerView
         layoutManager = AutoFitGridLayoutManager(requireActivity(), 400)
         binding.localRecyclerView.layoutManager = layoutManager
         isListMode = false
@@ -114,6 +118,85 @@ class HomeFragment : Fragment() {
                 binding.localRefreshLayout.isRefreshing = false })
 
         return root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+
+        adapter.setOnItemClickListener { point ->
+            isSelected = false;
+            if(!point.isFile) {
+                App.execute(point)
+                binding.localRefreshLayout.setRefreshing(true)
+                localViewModel.update(point)
+                mainViewModel.updateActionBarTitle(point.getNameItem())
+            } else {
+                try {
+                    if(point.getPathItem() != null) {
+                        val file = File(point.getPathItem())
+                        if (file.exists() && (file.isFile())) {
+                            val ext = SimpleUtils.getExtension(file.getName())
+                            if (ext.equals("fb2")) {
+                                val intent = Intent(Intent.ACTION_VIEW)
+                                intent.setType("*/*")
+                                intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                var chosenIntent =
+                                    Intent.createChooser(intent, "Choose file...")
+                                startActivity(chosenIntent)
+                            } else {
+                                SimpleUtils.openFile(App.instance, file)
+                            }
+                        }
+                    }
+                } catch (npe: NullPointerException) {
+                    npe.printStackTrace()
+                }
+            }
+
+        }
+
+        adapter.setOnItemLongClickListener { point: Folder ->
+
+            point.isChecked = !point.isChecked
+            //localViewModel.update(adapter.getPointAt(position));
+            adapter.notifyItemChanged(position);
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState);
+        var mode = 0
+        if(isListMode) {
+            mode = 1
+        }
+
+        outState.putInt("mode", mode)
+    }
+
+    override fun onPause() {
+        super.onPause();
+        //String actionBarTitle = Objects.requireNonNull(appBar.getTitle()).toString();
+        //sp.edit().putString("actionbar_title", actionBarTitle).apply();
+        //sp.edit().putBoolean("layout_mode", isListMode).apply()
+    }
+
+    override fun onResume() {
+        super.onResume();
+        var actionBarTitle = sp.getString("actionbar_title", "");
+        if(actionBarTitle.equals("0")) {
+            mainViewModel.updateActionBarTitle(App.rootPath);
+        } else mainViewModel.updateActionBarTitle(actionBarTitle!!);
+
+        if (isListMode == false) {
+            //binding.localRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 2));
+            binding.localRecyclerView.setLayoutManager(layoutManager);
+            //item.setIcon(R.drawable.baseline_view_list_yellow_24);
+        } else {
+            binding.localRecyclerView.setLayoutManager(LinearLayoutManager(getActivity()));
+            //item.setIcon(R.drawable.baseline_view_column_yellow_24);
+        }
     }
 
     class AutoFitGridLayoutManager(context: Context, columnWidth: Int) : GridLayoutManager(context, 1) {
@@ -146,6 +229,51 @@ class HomeFragment : Fragment() {
             }
             super.onLayoutChildren(recycler, state)
         }
+    }
+
+    @Override
+    override fun onAttach(context: Context) {
+        super.onAttach(requireContext())
+        val callback: OnBackPressedCallback = object : OnBackPressedCallback(
+            true // default to enabled
+        ) {
+            override fun handleOnBackPressed() {
+                try {
+                    var file: File? = null
+                    if (App.previousPath != null) {
+                        file =  File(App.previousPath)
+                    }
+                    if (!file!!.getPath().equals(App.rootPath)) {
+                        if (file.exists()) {
+                            file = File(Objects.requireNonNull(file.getParent()))
+                            val fd: Folder = Folder()
+                            fd.isFile = file.isFile()
+                            fd.setNameItem(file.getName())
+                            fd.setPathItem(file.getPath())
+                            if (fd.isFile) {
+                                fd.setItemSize(file.length())
+                                fd.setImageItem(App.file_image)
+                            } else {
+                                fd.setItemSize(0L)
+                                fd.setImageItem(App.folder_image)
+                            }
+                            localViewModel.update(fd)
+                            localRefreshLayout.setRefreshing(true)
+                            mainViewModel.updateActionBarTitle(file.getName())
+                        }
+                    } else {
+                        this.remove()
+                        requireActivity().onBackPressedDispatcher.onBackPressed()
+                    }
+
+                } catch (npe: NullPointerException) {
+                    npe.printStackTrace();
+                }
+            }
+        };
+        requireActivity().onBackPressedDispatcher.addCallback(
+            this, // LifecycleOwner
+            callback);
     }
 
     override fun onDestroyView() {

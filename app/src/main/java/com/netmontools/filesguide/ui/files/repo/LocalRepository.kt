@@ -11,6 +11,9 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 import java.io.File
 import java.util.Objects
@@ -22,36 +25,41 @@ class LocalRepository(application: Application?) {
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
     private val mainDispatcher: CoroutineDispatcher = Dispatchers.Main
     var allPoints: LiveData<List<Folder>>? = null
-    private var liveData: MutableLiveData<List<Folder>>? = MutableLiveData()
-    //private var folders = ArrayList<Folder>()
+    private var liveData: MutableLiveData<List<Folder>>? = MutableLiveData<List<Folder>>()
 
-    //var remoteFolders = ArrayList<RemoteFolder>()
-    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
-    private val dispatcherMain: CoroutineDispatcher = Dispatchers.Main
+    var folders = ArrayList<Folder>()
 
-    private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    //private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     init {
-        try {
+        var any = try {
             liveData!!.setValue(App.folders)
             var size = App.folders.size
             size++
-        } catch ( npe: NullPointerException) {
+        } catch (npe: NullPointerException) {
             npe.printStackTrace()
         }
         allPoints = liveData
     }
 
-    //suspend fun PostUpdate()  = withContext(mainDispatcher) {
-    //    liveData!!.value = folders
-    //    allPoints = liveData
-    //}
-    fun delete(point: Folder?) {
-        //TODO
+    suspend fun update(point: Folder?) = withContext(mainDispatcher) {
+        coroutineScope {
+            launch {PostUpdate()}
+        }
+
+    }
+    fun getAll(): LiveData<List<Folder>>? {
+        return allPoints
     }
 
-    suspend fun update(point: Folder?) {
+    suspend fun PostUpdate()  = withContext(mainDispatcher) {
+        liveData!!.value = App.folders
+        allPoints = liveData
+    }
+
+    fun updateItem(point: Folder?) {
         try {
+            folders.clear()
             var fd: Folder
             val dir: Folder
             var file: File? = null
@@ -99,7 +107,7 @@ class LocalRepository(application: Application?) {
                                     fd.isVideo = false
                                 }
                             }
-                            App.folders.add(fd)
+                            folders.add(fd)
                             dir.addFolderItem(fd)
                         }
                     }
@@ -111,7 +119,7 @@ class LocalRepository(application: Application?) {
         }
     }
 
-    fun populate() {
+    suspend fun populate() {
         App.folders.clear()
         try {
             var fd: Folder
@@ -182,5 +190,4 @@ class LocalRepository(application: Application?) {
             e.printStackTrace()
         }
     }
-
 }
