@@ -2,6 +2,7 @@ package com.netmontools.filesguide.ui.files.view
 
 import android.R
 import android.annotation.SuppressLint
+import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -62,7 +63,7 @@ class HomeFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        sp = PreferenceManager.getDefaultSharedPreferences(App.instance)
+        sp = PreferenceManager.getDefaultSharedPreferences(requireContext())
 
         mainViewModel =
             ViewModelProvider(requireContext() as FragmentActivity).get(MainViewModel::class.java
@@ -112,7 +113,7 @@ class HomeFragment : Fragment() {
         binding.localRecyclerView.adapter = adapter
 
         localViewModel =
-            ViewModelProvider.AndroidViewModelFactory(App.getInstance()).create(HomeViewModel::class.java)
+            ViewModelProvider.AndroidViewModelFactory(App as Application).create(HomeViewModel::class.java)
         localViewModel.allPoints.observe(viewLifecycleOwner, Observer<List<Folder>>
                 {points -> adapter.setPoints(points)
                 binding.localRefreshLayout.isRefreshing = false })
@@ -185,7 +186,7 @@ class HomeFragment : Fragment() {
         super.onResume();
         var actionBarTitle = sp.getString("actionbar_title", "");
         if(actionBarTitle.equals("0")) {
-            mainViewModel.updateActionBarTitle(App.rootPath);
+            mainViewModel.updateActionBarTitle(App.rootPath!!);
         } else mainViewModel.updateActionBarTitle(actionBarTitle!!);
 
         if (isListMode == false) {
@@ -240,7 +241,7 @@ class HomeFragment : Fragment() {
                 try {
                     var file: File? = null
                     if (App.previousPath != null) {
-                        file =  File(App.previousPath)
+                        file =  File(App.previousPath!!)
                     }
                     if (!file!!.getPath().equals(App.rootPath)) {
                         if (file.exists()) {
@@ -251,10 +252,10 @@ class HomeFragment : Fragment() {
                             fd.setPathItem(file.getPath())
                             if (fd.isFile) {
                                 fd.setItemSize(file.length())
-                                fd.setImageItem(App.file_image)
+                                fd.setImageItem(App.file_image!!)
                             } else {
                                 fd.setItemSize(0L)
-                                fd.setImageItem(App.folder_image)
+                                fd.setImageItem(App.folder_image!!)
                             }
                             localViewModel.update(fd)
                             binding.localRefreshLayout.setRefreshing(true)
