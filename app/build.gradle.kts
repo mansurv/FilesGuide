@@ -50,6 +50,8 @@ dependencies {
     implementation("androidx.navigation:navigation-fragment-ktx:2.7.5")
     implementation("androidx.navigation:navigation-ui-ktx:2.7.5")
     implementation("androidx.preference:preference:1.2.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.3")
     implementation("com.github.bumptech.glide:glide:4.14.2")
 
     testImplementation("junit:junit:4.13.2")

@@ -42,18 +42,18 @@ class LocalRepository(application: Application?) {
         allPoints = liveData
     }
 
-    suspend fun update(point: Folder?) = withContext(mainDispatcher) {
+    suspend fun update(item: Folder?) = withContext(mainDispatcher) {
         coroutineScope {
-            launch {PostUpdate()}
+            launch {updateItem(item)}
         }
-
+        PostUpdate()
     }
     fun getAll(): LiveData<List<Folder>>? {
         return allPoints
     }
 
     suspend fun PostUpdate()  = withContext(mainDispatcher) {
-        liveData!!.value = App.folders
+        liveData!!.value = folders
         allPoints = liveData
     }
 
@@ -71,7 +71,7 @@ class LocalRepository(application: Application?) {
                     dir.name = file.name
                     dir.path = file.path
                     dir.folders = ArrayList()
-                    for (f in Objects.requireNonNull(file.listFiles())) {
+                    for (f in (file.listFiles())!!) {
                         if (f.exists()) {
                             fd = Folder()
                             fd.name = f.name

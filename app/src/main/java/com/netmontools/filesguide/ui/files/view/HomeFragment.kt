@@ -32,7 +32,6 @@ import com.netmontools.filesguide.utils.SimpleUtils
 import java.io.File
 import java.util.Objects
 
-
 class HomeFragment : Fragment() {
 
     private lateinit var localViewModel: HomeViewModel
@@ -114,7 +113,8 @@ class HomeFragment : Fragment() {
 
         localViewModel =
             ViewModelProvider.AndroidViewModelFactory(App.getInstance()).create(HomeViewModel::class.java)
-        localViewModel.allPoints.observe(viewLifecycleOwner, Observer<List<Folder>> {points -> adapter.setPoints(points)
+        localViewModel.allPoints.observe(viewLifecycleOwner, Observer<List<Folder>>
+                {points -> adapter.setPoints(points)
                 binding.localRefreshLayout.isRefreshing = false })
 
         return root
@@ -127,7 +127,6 @@ class HomeFragment : Fragment() {
         adapter.setOnItemClickListener { point ->
             isSelected = false;
             if(!point.isFile) {
-                App.execute(point)
                 binding.localRefreshLayout.setRefreshing(true)
                 localViewModel.update(point)
                 mainViewModel.updateActionBarTitle(point.getNameItem())
@@ -258,7 +257,7 @@ class HomeFragment : Fragment() {
                                 fd.setImageItem(App.folder_image)
                             }
                             localViewModel.update(fd)
-                            localRefreshLayout.setRefreshing(true)
+                            binding.localRefreshLayout.setRefreshing(true)
                             mainViewModel.updateActionBarTitle(file.getName())
                         }
                     } else {
