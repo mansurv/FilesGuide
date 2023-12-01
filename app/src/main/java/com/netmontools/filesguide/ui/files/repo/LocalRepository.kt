@@ -40,9 +40,10 @@ class LocalRepository(application: Application?) {
             npe.printStackTrace()
         }
         allPoints = liveData
-    }
+    }   val file = File("/path")
 
-    suspend fun update(item: Folder?) = withContext(mainDispatcher) {
+
+    suspend fun update(item: Folder?) = withContext(ioDispatcher) {
         coroutineScope {
             launch {updateItem(item)}
         }
@@ -71,23 +72,23 @@ class LocalRepository(application: Application?) {
                     dir.name = file.name
                     dir.path = file.path
                     dir.folders = ArrayList()
-                    for (f in (file.listFiles())!!) {
-                        if (f.exists()) {
+                    file.walk().forEach {
+                        if (it.exists()) {
                             fd = Folder()
-                            fd.name = f.name
-                            fd.path = f.path
-                            if (f.isDirectory) {
+                            fd.name = it.name
+                            fd.path = it.path
+                            if (it.isDirectory) {
                                 fd.isFile = false
-                                fd.size = SimpleUtils.getDirectorySize(f)
+                                fd.size = 0//SimpleUtils.getDirectorySize(it)
                                 fd.image = App.folder_image!!
                                 fd.isImage = false
                                 fd.isVideo = false
                             } else {
                                 fd.isFile = true
-                                fd.size = f.length()
-                                App.imageSelector(f)
+                                fd.size = it.length()
+                                App.imageSelector(it)
                                 fd.image = App.file_image!!
-                                val ext = SimpleUtils.getExtension(f.name)
+                                val ext = SimpleUtils.getExtension(it.name)
                                 if (ext.equals("jpg", ignoreCase = true) ||
                                     ext.equals("jpeg", ignoreCase = true) ||
                                     ext.equals("png", ignoreCase = true) ||

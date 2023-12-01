@@ -5,6 +5,7 @@ import android.content.ContentValues.TAG
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
@@ -50,7 +51,6 @@ class MainActivity : AppCompatActivity() {
             supportActionBar?.title = it
         })
         val sp = PreferenceManager.getDefaultSharedPreferences(this)
-
     }
 
     fun View.showSnackbar(

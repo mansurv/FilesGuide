@@ -53,11 +53,6 @@ public class App extends Application {
    //    return database;
     //}
 
-    public static void execute(Folder item) {
-        new UpdateListAsyncTask().execute(item);
-    }
-
-
     public static void imageSelector(File file) {
         String ext = SimpleUtils.getExtension(file.getName());
         switch (ext) {
@@ -166,6 +161,33 @@ public class App extends Application {
                                     fd.setSize(0L);
                                     folders.add(fd);
                                 }
+                            } else if(f.isFile()) {
+                                fd = new Folder();
+                                fd.setName(f.getName());
+                                fd.setPath(f.getPath());
+                                fd.setFile(true);
+                                fd.setChecked(false);
+                                fd.setSize(f.length());
+                                App.imageSelector(f);
+                                fd.setImage(App.file_image);
+
+                                String ext = SimpleUtils.getExtension(f.getName());
+                                if(ext.equalsIgnoreCase("jpg") ||
+                                        ext.equalsIgnoreCase("png") ||
+                                        ext.equalsIgnoreCase("webp") ||
+                                        ext.equalsIgnoreCase("bmp")) {
+                                    fd.setImage(true);
+                                    fd.setVideo(false);
+                                } else if (ext.equalsIgnoreCase("mp4") ||
+                                        ext.equalsIgnoreCase("avi") ||
+                                        ext.equalsIgnoreCase("mkv")) {
+                                    fd.setImage(false);
+                                    fd.setVideo(true);
+                                } else {
+                                    fd.setImage(false);
+                                    fd.setVideo(false);
+                                }
+                                folders.add(fd);
                             }
                         }
                         for (File f : Objects.requireNonNull(file.listFiles())) {
@@ -180,22 +202,22 @@ public class App extends Application {
                                     App.imageSelector(f);
                                     fd.setImage(App.file_image);
 
-                                    /*String ext = SimpleUtils.getExtension(f.getName());
+                                    String ext = SimpleUtils.getExtension(f.getName());
                                     if(ext.equalsIgnoreCase("jpg") ||
                                             ext.equalsIgnoreCase("png") ||
                                             ext.equalsIgnoreCase("webp") ||
                                             ext.equalsIgnoreCase("bmp")) {
-                                        fd.isImage = true;
-                                        fd.isVideo = false;
+                                        fd.setImage(true);
+                                        fd.setVideo(false);
                                     } else if (ext.equalsIgnoreCase("mp4") ||
                                             ext.equalsIgnoreCase("avi") ||
                                             ext.equalsIgnoreCase("mkv")) {
-                                        fd.isImage = false;
-                                        fd.isVideo = true;
+                                        fd.setImage(false);
+                                        fd.setVideo(true);
                                     } else {
-                                        fd.isImage = false;
-                                        fd.isVideo = false;
-                                    }*/
+                                        fd.setImage(false);
+                                        fd.setVideo(false);
+                                    }
                                     folders.add(fd);
                                 }
                             }
@@ -209,90 +231,7 @@ public class App extends Application {
             }//doInBackground
             return " ";
         }
-
     }
-
-
-
-    private static class UpdateListAsyncTask extends AsyncTask<Folder, Void, Void> {
-        @Override
-        protected void onPreExecute() {
-            folders.clear();
-        }
-        @Override
-        protected Void doInBackground(Folder... points) {
-
-            try {
-                Folder fd, dir;
-                File file = null;
-                if (points[0].getPath() != null) {
-                    file = new File(points[0].getPath());
-                }
-                if (file != null) {
-                    previousPath = file.getPath();
-                    if (file.exists()) {
-                        if (file.isDirectory()) {
-                            dir = new Folder();
-                            dir.setName(file.getName());
-                            dir.setPath(file.getPath());
-                            dir.setFolders(new ArrayList<Folder>());
-
-                            for (File f : Objects.requireNonNull(file.listFiles())) {
-                                if (f.exists()) {
-                                    fd = new Folder();
-                                    fd.setName(f.getName());
-                                    fd.setPath(f.getPath());
-                                    if (f.isDirectory()) {
-                                        fd.setFile(false);
-                                        fd.setSize(SimpleUtils.getDirectorySize(f));
-                                        fd.setImage(folder_image);
-                                        fd.setImage(false);
-                                        fd.setVideo(false);
-                                    } else {
-                                        fd.setFile(true);
-                                        fd.setSize(f.length());
-                                        imageSelector(f);
-                                        fd.setImage(file_image);
-                                        String ext = SimpleUtils.getExtension(f.getName());
-                                        if(ext.equalsIgnoreCase("jpg") ||
-                                                ext.equalsIgnoreCase("jpeg") ||
-                                                ext.equalsIgnoreCase("png") ||
-                                                ext.equalsIgnoreCase("webp") ||
-                                                ext.equalsIgnoreCase("bmp")) {
-                                            fd.setImage(true);
-                                            fd.setVideo(false);
-                                        } else if (ext.equalsIgnoreCase("mp4") ||
-                                                ext.equalsIgnoreCase("avi") ||
-                                                ext.equalsIgnoreCase("mkv")) {
-                                            fd.setImage(false);
-                                            fd.setVideo(true);
-                                        } else {
-                                            fd.setImage(false);
-                                            fd.setVideo(false);
-                                        }
-                                    }
-                                    folders.add(fd);
-                                    dir.addFolderItem(fd);
-                                }
-                            }
-                        }
-                    }
-                }
-            } catch (NullPointerException npe) {
-                npe.printStackTrace();
-                npe.getMessage();
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void result) {
-            //liveData.setValue(folders);
-            //allPoints = liveData;
-        }
-    }
-
-
 }
 
 
