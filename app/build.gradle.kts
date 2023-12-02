@@ -39,6 +39,8 @@ android {
 }
 
 dependencies {
+    val activity_version = "1.8.1"
+    val fragment_version = "1.6.2"
 
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
@@ -50,8 +52,10 @@ dependencies {
     implementation("androidx.navigation:navigation-fragment-ktx:2.7.5")
     implementation("androidx.navigation:navigation-ui-ktx:2.7.5")
     implementation("androidx.preference:preference:1.2.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.4")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.3")
+    implementation("androidx.activity:activity-ktx:$activity_version")
+    implementation("androidx.fragment:fragment-ktx:$fragment_version")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("com.github.bumptech.glide:glide:4.14.2")
 
     testImplementation("junit:junit:4.13.2")

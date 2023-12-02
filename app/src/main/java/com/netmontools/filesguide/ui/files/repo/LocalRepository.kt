@@ -40,8 +40,7 @@ class LocalRepository(application: Application?) {
             npe.printStackTrace()
         }
         allPoints = liveData
-    }   val file = File("/path")
-
+    }   
 
     suspend fun update(item: Folder?) = withContext(ioDispatcher) {
         coroutineScope {
