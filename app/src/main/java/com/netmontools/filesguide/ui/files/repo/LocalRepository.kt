@@ -28,19 +28,26 @@ class LocalRepository(application: Application?) {
     private var liveData: MutableLiveData<List<Folder>>? = MutableLiveData<List<Folder>>()
 
     var folders = ArrayList<Folder>()
+    var foldersApp = ArrayList<Folder>()
 
     //private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     init {
-        var any = try {
+        try {
             liveData!!.setValue(App.folders)
-            var size = App.folders.size
-            size++
+            foldersApp = App.folders
+
         } catch (npe: NullPointerException) {
             npe.printStackTrace()
         }
         allPoints = liveData
-    }   
+
+        //suspend fun populateDb() = withContext(ioDispatcher) {
+        //    coroutineScope {
+        //        launch {populate()}
+        //    }
+        //}
+    }
 
     suspend fun update(item: Folder?) = withContext(ioDispatcher) {
         coroutineScope {
@@ -71,7 +78,7 @@ class LocalRepository(application: Application?) {
                     dir.name = file.name
                     dir.path = file.path
                     dir.folders = ArrayList()
-                    file.walk().forEach {
+                    for (it in (file.listFiles())!!) {
                         if (it.exists()) {
                             fd = Folder()
                             fd.name = it.name
@@ -120,7 +127,7 @@ class LocalRepository(application: Application?) {
     }
 
     suspend fun populate() {
-        App.folders.clear()
+        foldersApp.clear()
         try {
             var fd: Folder
             val dir: Folder
@@ -143,7 +150,7 @@ class LocalRepository(application: Application?) {
                             fd.isChecked = false
                             fd.isImage = false
                             fd.isVideo = false
-                            //fd.setSize(SimpleUtils.getDirectorySize(f));
+                            fd.setItemSize(SimpleUtils.getDirectorySize(f));
                             fd.size = 0L
                             App.folders.add(fd)
                             dir.folders.add(fd)
@@ -180,7 +187,7 @@ class LocalRepository(application: Application?) {
                                 fd.isImage = false;
                                 fd.isVideo = false;
                             }
-                            App.folders.add(fd)
+                            foldersApp.add(fd)
                             dir.folders.add(fd)
                         }
                     }

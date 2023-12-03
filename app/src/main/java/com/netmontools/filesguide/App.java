@@ -91,7 +91,7 @@ public class App extends Application {
         }
     }
 
-    static class PopulateDbAsyncTask extends AsyncTask<Void, Void, String> {
+    class PopulateDbAsyncTask extends AsyncTask<Void, Void, String> {
 
         @Override
         protected void onPreExecute() {
@@ -160,34 +160,34 @@ public class App extends Application {
                                     //fd.setSize(SimpleUtils.getDirectorySize(f));
                                     fd.setSize(0L);
                                     folders.add(fd);
-                                }
-                            } else if(f.isFile()) {
-                                fd = new Folder();
-                                fd.setName(f.getName());
-                                fd.setPath(f.getPath());
-                                fd.setFile(true);
-                                fd.setChecked(false);
-                                fd.setSize(f.length());
-                                App.imageSelector(f);
-                                fd.setImage(App.file_image);
+                                } else if(f.isFile()) {
+                                    fd = new Folder();
+                                    fd.setName(f.getName());
+                                    fd.setPath(f.getPath());
+                                    fd.setFile(true);
+                                    fd.setChecked(false);
+                                    fd.setSize(f.length());
+                                    App.imageSelector(f);
+                                    fd.setImage(App.file_image);
 
-                                String ext = SimpleUtils.getExtension(f.getName());
-                                if(ext.equalsIgnoreCase("jpg") ||
-                                        ext.equalsIgnoreCase("png") ||
-                                        ext.equalsIgnoreCase("webp") ||
-                                        ext.equalsIgnoreCase("bmp")) {
-                                    fd.setImage(true);
-                                    fd.setVideo(false);
-                                } else if (ext.equalsIgnoreCase("mp4") ||
-                                        ext.equalsIgnoreCase("avi") ||
-                                        ext.equalsIgnoreCase("mkv")) {
-                                    fd.setImage(false);
-                                    fd.setVideo(true);
-                                } else {
-                                    fd.setImage(false);
-                                    fd.setVideo(false);
+                                    String ext = SimpleUtils.getExtension(f.getName());
+                                    if (ext.equalsIgnoreCase("jpg") ||
+                                            ext.equalsIgnoreCase("png") ||
+                                            ext.equalsIgnoreCase("webp") ||
+                                            ext.equalsIgnoreCase("bmp")) {
+                                        fd.setImage(true);
+                                        fd.setVideo(false);
+                                    } else if (ext.equalsIgnoreCase("mp4") ||
+                                            ext.equalsIgnoreCase("avi") ||
+                                            ext.equalsIgnoreCase("mkv")) {
+                                        fd.setImage(false);
+                                        fd.setVideo(true);
+                                    } else {
+                                        fd.setImage(false);
+                                        fd.setVideo(false);
+                                    }
+                                    folders.add(fd);
                                 }
-                                folders.add(fd);
                             }
                         }
                         for (File f : Objects.requireNonNull(file.listFiles())) {
