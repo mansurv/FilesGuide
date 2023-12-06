@@ -1,6 +1,8 @@
 package com.netmontools.filesguide.ui.files.view
 
-import android.R
+
+
+
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
@@ -8,12 +10,18 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.SparseArray
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.LinearLayout
 import androidx.activity.OnBackPressedCallback
-import androidx.annotation.Nullable
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Observer
@@ -26,11 +34,13 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.netmontools.filesguide.App
 import com.netmontools.filesguide.MainViewModel
+import com.netmontools.filesguide.R
 import com.netmontools.filesguide.databinding.FragmentHomeBinding
 import com.netmontools.filesguide.ui.files.model.Folder
 import com.netmontools.filesguide.utils.SimpleUtils
 import java.io.File
 import java.util.Objects
+
 
 class HomeFragment : Fragment() {
 
@@ -44,11 +54,13 @@ class HomeFragment : Fragment() {
     lateinit var layoutManager: AutoFitGridLayoutManager
     private lateinit var adapter: LocalAdapter
     private val position = 0
+    private val menuHost: MenuHost get() = requireActivity()
 
     @SuppressLint("UseSparseArrays")
     var selectedArray = SparseArray<Boolean>()
     var isSelected = false
     var isListMode: Boolean = false
+    var isBigMode: Boolean = false
 
     fun LocalFragment() {}
 
@@ -62,6 +74,7 @@ class HomeFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         sp = PreferenceManager.getDefaultSharedPreferences(App.instance)
 
         mainViewModel =
@@ -97,8 +110,8 @@ class HomeFragment : Fragment() {
         val root: View = binding.root
 
         binding.localRefreshLayout.setColorSchemeResources(
-            R.color.holo_blue_bright, R.color.holo_green_light,
-            R.color.holo_orange_light, R.color.holo_red_light
+            android.R.color.holo_blue_bright, android.R.color.holo_green_light,
+            android.R.color.holo_orange_light, android.R.color.holo_red_light
         )
         binding.localRefreshLayout.isEnabled = false
 
@@ -123,6 +136,56 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        menuHost.addMenuProvider((object : MenuProvider {
+            override fun onPrepareMenu(menu: Menu) {
+
+                if (!isListMode) {
+                    menu.findItem(com.netmontools.filesguide.R.id.listMode).setIcon(com.netmontools.filesguide.R.drawable.baseline_view_list_yellow_24)
+                } else {
+                    menu.findItem(com.netmontools.filesguide.R.id.listMode).setIcon(com.netmontools.filesguide.R.drawable.baseline_view_column_yellow_24)
+                }
+            }
+
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+
+                menuInflater.inflate(com.netmontools.filesguide.R.menu.fragment_menu, menu)
+            }
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+
+                return when (menuItem.itemId) {
+                    com.netmontools.filesguide.R.id.property -> {
+                        if (menuItem.isChecked) {
+
+                            menuItem.setChecked(false)
+                        } else {
+                            menuItem.setChecked(true)
+
+                        }
+
+                        true
+                    }
+                    
+                    com.netmontools.filesguide.R.id.listMode -> {
+                        if (isListMode == false) {
+                            isListMode = true
+                            //recyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 2));
+                            binding.localRecyclerView.setLayoutManager(layoutManager)
+                            menuItem.setIcon(com.netmontools.filesguide.R.drawable.baseline_view_list_yellow_24)
+                        } else {
+                            isListMode = false
+                            binding.localRecyclerView.setLayoutManager(GridLayoutManager(getActivity(), 2));
+                            menuItem.setIcon(com.netmontools.filesguide.R.drawable.baseline_view_column_yellow_24)
+                        }
+                        true
+                    }
+                    else -> return true
+                }
+            }
+
+            override fun onMenuClosed(menu: Menu) {}// Меню закрыто
+
+        }), viewLifecycleOwner)
 
         adapter.setOnItemClickListener { point ->
             isSelected = false;
@@ -138,7 +201,7 @@ class HomeFragment : Fragment() {
                             val ext = SimpleUtils.getExtension(file.getName())
                             if (ext.equals("fb2")) {
                                 val intent = Intent(Intent.ACTION_VIEW)
-                                intent.setType("*/*")
+                                intent.setType("text/plain")
                                 intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                 var chosenIntent =
@@ -176,9 +239,8 @@ class HomeFragment : Fragment() {
 
     override fun onPause() {
         super.onPause();
-        //String actionBarTitle = Objects.requireNonNull(appBar.getTitle()).toString();
-        //sp.edit().putString("actionbar_title", actionBarTitle).apply();
-        //sp.edit().putBoolean("layout_mode", isListMode).apply()
+        sp.edit().putString("actionbar_title", appBar.getTitle().toString()).apply();
+        sp.edit().putBoolean("layout_mode", isListMode).apply()
     }
 
     override fun onResume() {
@@ -189,12 +251,12 @@ class HomeFragment : Fragment() {
         } else mainViewModel.updateActionBarTitle(actionBarTitle!!);
 
         if (isListMode == false) {
-            //binding.localRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 2));
-            binding.localRecyclerView.setLayoutManager(layoutManager);
-            //item.setIcon(R.drawable.baseline_view_list_yellow_24);
+            binding.localRecyclerView.setLayoutManager(GridLayoutManager(getActivity(), 2));
+            //binding.localRecyclerView.setLayoutManager(layoutManager);
+            //menuItem.setIcon(R.drawable.baseline_view_list_yellow_24);
         } else {
             binding.localRecyclerView.setLayoutManager(LinearLayoutManager(getActivity()));
-            //item.setIcon(R.drawable.baseline_view_column_yellow_24);
+            //menuI.setIcon(R.drawable.baseline_view_column_yellow_24);
         }
     }
 

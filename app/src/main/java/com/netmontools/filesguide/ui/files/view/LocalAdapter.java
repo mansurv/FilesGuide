@@ -24,6 +24,7 @@ public class LocalAdapter extends RecyclerView.Adapter<LocalAdapter.LocalHolder>
 
     private static final int TYPE_FILE = 0;
     private static final int TYPE_FILE_CHECKED = 1;
+    private static final int TYPE_BIG_IMAGE = 2;
     private List<Folder> points = new ArrayList<>();
     private OnItemClickListener listener;
     private OnItemLongClickListener longClickListener;
@@ -32,15 +33,17 @@ public class LocalAdapter extends RecyclerView.Adapter<LocalAdapter.LocalHolder>
     @Override
     public LocalHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
 
-        View itemView;
+        View itemView = null;
 
         LayoutInflater layoutInflater = LayoutInflater.from(parent.getContext());
 
        if (viewType == TYPE_FILE){
             itemView = layoutInflater.inflate(R.layout.local_item, parent, false);
-        } else{
+        } else if (viewType == TYPE_FILE_CHECKED) {
             itemView = layoutInflater.inflate(R.layout.local_checked_item, parent, false);
-        }
+        } else if (viewType == TYPE_BIG_IMAGE) {
+           itemView = layoutInflater.inflate(R.layout.local_big_image_item, parent, false);
+       }
 
 
         final LocalHolder holder = new LocalHolder(itemView);
@@ -76,12 +79,11 @@ public class LocalAdapter extends RecyclerView.Adapter<LocalAdapter.LocalHolder>
         File file = new File(currentPoint.getPath());
         //Picasso.get().load(file).fit().into(imageView);
         if(file.exists() && file.isFile()) {
-            String name = file.getName();
-            String ext = name.substring(name.lastIndexOf(".") + 1, name.length());
             if (currentPoint.isVideo() || currentPoint.isImage()) {
                 Glide
                         .with(holder.photoImageView.getContext())
                         .load(file)
+                        .centerCrop()
                         .diskCacheStrategy(DiskCacheStrategy.NONE)
                         .into(imageView);
             } else {
@@ -103,9 +105,11 @@ public class LocalAdapter extends RecyclerView.Adapter<LocalAdapter.LocalHolder>
     @Override
     public int getItemViewType(int position) {
 
-        if (points.get(position).isChecked())
+        if (points.get(position).isChecked()) {
             return TYPE_FILE_CHECKED;
-        else
+        } else if(points.get(position).isImage()) {
+            return TYPE_BIG_IMAGE;
+        } else
             return TYPE_FILE;
     }
 
