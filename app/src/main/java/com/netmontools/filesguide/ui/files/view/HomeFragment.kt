@@ -75,7 +75,7 @@ class HomeFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        sp = PreferenceManager.getDefaultSharedPreferences(App.instance)
+        sp = PreferenceManager.getDefaultSharedPreferences(App.instance!!)
 
         mainViewModel =
             ViewModelProvider(requireContext() as FragmentActivity).get(MainViewModel::class.java
@@ -125,7 +125,7 @@ class HomeFragment : Fragment() {
         binding.localRecyclerView.adapter = adapter
 
         localViewModel =
-            ViewModelProvider.AndroidViewModelFactory(App.getInstance()).create(HomeViewModel::class.java)
+            ViewModelProvider.AndroidViewModelFactory(App.instance!!).create(HomeViewModel::class.java)
         localViewModel.allPoints.observe(viewLifecycleOwner, Observer<List<Folder>>
                 {points -> adapter.setPoints(points)
                 binding.localRefreshLayout.isRefreshing = false })
@@ -208,7 +208,7 @@ class HomeFragment : Fragment() {
                                     Intent.createChooser(intent, "Choose file...")
                                 startActivity(chosenIntent)
                             } else {
-                                SimpleUtils.openFile(App.instance, file)
+                                SimpleUtils.openFile(App.instance!!, file)
                             }
                         }
                     }
@@ -247,7 +247,7 @@ class HomeFragment : Fragment() {
         super.onResume();
         var actionBarTitle = sp.getString("actionbar_title", "");
         if(actionBarTitle.equals("0")) {
-            mainViewModel.updateActionBarTitle(App.rootPath);
+            mainViewModel.updateActionBarTitle(App.rootPath!!);
         } else mainViewModel.updateActionBarTitle(actionBarTitle!!);
 
         if (isListMode == false) {
@@ -313,10 +313,10 @@ class HomeFragment : Fragment() {
                             fd.setPathItem(file.getPath())
                             if (fd.isFile) {
                                 fd.setItemSize(file.length())
-                                fd.setImageItem(App.file_image)
+                                //fd.setImageItem(App.file_image)
                             } else {
                                 fd.setItemSize(0L)
-                                fd.setImageItem(App.folder_image)
+                                //fd.setImageItem(App.folder_image)
                             }
                             localViewModel.update(fd)
                             binding.localRefreshLayout.setRefreshing(true)
