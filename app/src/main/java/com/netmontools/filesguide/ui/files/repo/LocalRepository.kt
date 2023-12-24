@@ -41,13 +41,7 @@ class LocalRepository(application: Application?) {
 
     init {
 
-        suspend fun scanRootPath() = withContext(ioDispatcher) {
-            coroutineScope {
-                launch {populate()}
-            }
-            PostUpdate()
-        }
-        /*try {
+        try {
             for(folder in App.folders) {
                 if(folder.isFile) {
                     folder.image = file_image!!
@@ -62,7 +56,7 @@ class LocalRepository(application: Application?) {
         } catch (npe: NullPointerException) {
             npe.printStackTrace()
         }
-        allPoints = liveData*/
+        allPoints = liveData
 
     }
 
