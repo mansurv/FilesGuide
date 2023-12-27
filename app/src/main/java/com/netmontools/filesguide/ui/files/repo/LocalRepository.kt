@@ -113,7 +113,6 @@ class LocalRepository(application: Application?) {
         }
     }
 
-
     fun updateItem(point: Folder?) {
         try {
             folders.clear()

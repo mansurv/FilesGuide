@@ -15,8 +15,6 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.LinearLayout
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
@@ -34,7 +32,6 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.netmontools.filesguide.App
 import com.netmontools.filesguide.MainViewModel
-import com.netmontools.filesguide.R
 import com.netmontools.filesguide.databinding.FragmentHomeBinding
 import com.netmontools.filesguide.ui.files.model.Folder
 import com.netmontools.filesguide.utils.SimpleUtils
@@ -53,7 +50,7 @@ class HomeFragment : Fragment() {
     lateinit var appBar: ActionBar
     lateinit var layoutManager: AutoFitGridLayoutManager
     private lateinit var adapter: LocalAdapter
-    private val position = 0
+    private var position = 0
     private val menuHost: MenuHost get() = requireActivity()
 
     @SuppressLint("UseSparseArrays")
@@ -103,9 +100,6 @@ class HomeFragment : Fragment() {
     container: ViewGroup?,
     savedInstanceState: Bundle?
     ): View {
-        val homeViewModel =
-            ViewModelProvider(this).get(HomeViewModel::class.java)
-
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
@@ -124,8 +118,7 @@ class HomeFragment : Fragment() {
         adapter = LocalAdapter()
         binding.localRecyclerView.adapter = adapter
 
-        localViewModel =
-            ViewModelProvider.AndroidViewModelFactory(App.instance!!).create(HomeViewModel::class.java)
+        localViewModel = ViewModelProvider.AndroidViewModelFactory(App.instance!!).create(HomeViewModel::class.java)
         localViewModel.allPoints.observe(viewLifecycleOwner, Observer<List<Folder>>
                 {points -> adapter.setPoints(points)
                 binding.localRefreshLayout.isRefreshing = false })
@@ -195,21 +188,19 @@ class HomeFragment : Fragment() {
                 mainViewModel.updateActionBarTitle(point.getNameItem())
             } else {
                 try {
-                    if(point.getPathItem() != null) {
-                        val file = File(point.getPathItem())
-                        if (file.exists() && (file.isFile())) {
-                            val ext = SimpleUtils.getExtension(file.getName())
-                            if (ext.equals("fb2")) {
-                                val intent = Intent(Intent.ACTION_VIEW)
-                                intent.setType("text/plain")
-                                intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                var chosenIntent =
-                                    Intent.createChooser(intent, "Choose file...")
-                                startActivity(chosenIntent)
-                            } else {
-                                SimpleUtils.openFile(App.instance!!, file)
-                            }
+                    val file = File(point.getPathItem())
+                    if (file.exists() && (file.isFile())) {
+                        val ext = SimpleUtils.getExtension(file.getName())
+                        if (ext.equals("fb2")) {
+                            val intent = Intent(Intent.ACTION_VIEW)
+                            intent.setType("text/plain")
+                            intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            val chosenIntent =
+                                Intent.createChooser(intent, "Choose file...")
+                            startActivity(chosenIntent)
+                        } else {
+                            SimpleUtils.openFile(App.instance!!, file)
                         }
                     }
                 } catch (npe: NullPointerException) {
@@ -222,7 +213,6 @@ class HomeFragment : Fragment() {
         adapter.setOnItemLongClickListener { point: Folder ->
 
             point.isChecked = !point.isChecked
-            //localViewModel.update(adapter.getPointAt(position));
             adapter.notifyItemChanged(position);
         }
     }
@@ -235,6 +225,13 @@ class HomeFragment : Fragment() {
         }
 
         outState.putInt("mode", mode)
+        outState.putInt("position", position)
+    }
+
+    override fun onViewStateRestored(savedInstanceState: Bundle?) {
+        super.onViewStateRestored(savedInstanceState)
+        //position = savedInstanceState!!.getInt("position")
+        //localViewModel.update(adapter.getPointAt(position))
     }
 
     override fun onPause() {
@@ -245,7 +242,7 @@ class HomeFragment : Fragment() {
 
     override fun onResume() {
         super.onResume();
-        var actionBarTitle = sp.getString("actionbar_title", "");
+        val actionBarTitle = sp.getString("actionbar_title", "");
         if(actionBarTitle.equals("0")) {
             mainViewModel.updateActionBarTitle(App.rootPath!!);
         } else mainViewModel.updateActionBarTitle(actionBarTitle!!);
