@@ -59,10 +59,10 @@ class HomeFragment : Fragment() {
     var isListMode: Boolean = false
     var isBigMode: Boolean = false
 
-    fun LocalFragment() {}
+    fun HomeFragment() {}
 
     fun newInstance(index: Int) {
-        return LocalFragment()
+        return HomeFragment()
     }
 
 
@@ -172,6 +172,15 @@ class HomeFragment : Fragment() {
                         }
                         true
                     }
+
+                    com.netmontools.filesguide.R.id.bigMode -> {
+                        if (isBigMode) {
+
+                        }
+
+                        true
+                    }
+
                     else -> return true
                 }
             }
@@ -193,7 +202,7 @@ class HomeFragment : Fragment() {
                         val ext = SimpleUtils.getExtension(file.getName())
                         if (ext.equals("fb2")) {
                             val intent = Intent(Intent.ACTION_VIEW)
-                            intent.setType("text/plain")
+                            //intent.setType("*.*/*.*")
                             intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                             val chosenIntent =

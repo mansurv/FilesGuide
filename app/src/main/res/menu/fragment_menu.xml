@@ -14,5 +14,5 @@
         android:id="@+id/bigMode"
         android:title="@string/big_icon_mode"
         android:icon="@drawable/baseline_calendar_view_month_24"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="never" />
 </menu>

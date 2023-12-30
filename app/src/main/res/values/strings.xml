@@ -9,5 +9,5 @@
     <string name="permission_granted">Permission is granted. You can use the external storage now.</string>
     <string name="property">Property</string>
     <string name="list_mode">List mode</string>
-    <string name="big_icon_mode">Big icon mode</string>
+    <string name="big_icon_mode">Big image mode</string>
 </resources>
