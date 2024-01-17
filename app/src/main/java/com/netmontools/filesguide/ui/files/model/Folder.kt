@@ -15,62 +15,34 @@ class Folder {
     var isChecked = false
     var isImage = false
     var isVideo = false
-
-    var folders = ArrayList<Folder>()
-
     fun getIdItem(): UUID {
         return id
     }
-
     fun setIdItem(id: UUID?) {
         this.id = id
     }
-
     fun getItemSize(): Long {
         return size
     }
-
     fun setItemSize(size: Long) {
         this.size = size
     }
-
     fun getNameItem(): String {
         return name
     }
-
     fun setNameItem(name: String) {
         this.name = name
     }
-
     fun getPathItem(): String {
         return path
     }
-
     fun setPathItem( path: String) {
         this.path = path
     }
-
-    fun addFolderItem(f: Folder) {
-        folders.add(f)
-    }
-
-    fun getItemFolders(): ArrayList<Folder> {
-        return folders
-    }
-
-    fun getFolderItem(id: UUID): Folder? {
-        for (f in folders) {
-            if (f.getIdItem() === id) return f
-        }
-        return null
-    }
-
     fun getImageItem(): Drawable {
         return image
     }
-
     fun setImageItem(image: Drawable) {
         this.image = image
     }
-
 }

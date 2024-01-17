@@ -11,13 +11,17 @@ import com.netmontools.lookatnet.ui.local.repository.LocalRepository
 import kotlinx.coroutines.launch
 import java.util.UUID
 
-class HomeViewModel(application: Application) : AndroidViewModel(application) {
+class LocalViewModel(application: Application) : AndroidViewModel(application) {
     private val folder: Folder? = null
     private val repository: LocalRepository
     var allPoints: LiveData<List<Folder>>
 
     fun update(folder: Folder?) {
         viewModelScope.launch {repository.update(folder)}
+    }
+
+    fun scan(folder: Folder?) {
+        viewModelScope.launch {repository.scan(folder)}
     }
     val id: UUID
         get() = folder!!.id

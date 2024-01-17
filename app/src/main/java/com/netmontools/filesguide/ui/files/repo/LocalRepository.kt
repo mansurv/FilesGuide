@@ -18,6 +18,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import java.util.Objects
 
 
@@ -58,6 +61,12 @@ class LocalRepository(application: Application?) {
         }
         allPoints = liveData
 
+    }
+
+    suspend fun scan(item: Folder?) = withContext(ioDispatcher) {
+        coroutineScope {
+            launch { scanItem(item) }
+        }
     }
 
     suspend fun update(item: Folder?) = withContext(ioDispatcher) {
@@ -113,6 +122,31 @@ class LocalRepository(application: Application?) {
         }
     }
 
+    fun scanItem(point: Folder?) {
+        try {
+            var rootPath = point!!.getPathItem()
+            val folderPath = rootPath + "/Fb2Lib"
+            val file = File(folderPath)
+            if (!file.exists())
+                file.mkdir()
+            val scanPath = Paths.get(rootPath)
+            val result = arrayListOf<String>()
+            val paths = Files.walk(scanPath)
+                .filter { item -> Files.isRegularFile(item) }
+                .filter { item -> item.toString().endsWith(".fb2") }
+                .forEach { item -> result.add(item.toString()) }
+            for (index in result.indices) {
+                val sourcePath = Paths.get(result.get(index))
+                val targetPath = Paths.get(folderPath + "/" + sourcePath.fileName)
+                Files.move(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING)
+            }
+
+        } catch (npe: NullPointerException) {
+            npe.printStackTrace()
+            npe.message
+        }
+    }
+
     fun updateItem(point: Folder?) {
         try {
             folders.clear()
@@ -126,7 +160,6 @@ class LocalRepository(application: Application?) {
                     dir = Folder()
                     dir.name = file.name
                     dir.path = file.path
-                    dir.folders = ArrayList()
                     for (it in (file.listFiles())!!) {
                         if (it.exists()) {
                             fd = Folder()
@@ -164,7 +197,6 @@ class LocalRepository(application: Application?) {
                                 }
                             }
                             folders.add(fd)
-                            dir.addFolderItem(fd)
                         }
                     }
                 }
@@ -186,7 +218,6 @@ class LocalRepository(application: Application?) {
                 dir = Folder()
                 dir.name = file.name
                 dir.path = file.path
-                dir.folders = ArrayList()
                 for (f in Objects.requireNonNull(file.listFiles())) {
                     if (f.exists()) {
                         fd = Folder()
@@ -202,7 +233,6 @@ class LocalRepository(application: Application?) {
                             fd.setItemSize(SimpleUtils.getDirectorySize(f));
                             fd.size = 0L
                             folders.add(fd)
-                            dir.folders.add(fd)
                         }
                     }
                 }
@@ -237,7 +267,6 @@ class LocalRepository(application: Application?) {
                                 fd.isVideo = false;
                             }
                             folders.add(fd)
-                            dir.folders.add(fd)
                         }
                     }
                 }

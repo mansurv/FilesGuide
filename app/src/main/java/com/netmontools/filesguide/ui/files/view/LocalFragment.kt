@@ -14,7 +14,10 @@ import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
+import android.view.View.OnLongClickListener
 import android.view.ViewGroup
+import android.widget.PopupMenu
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
@@ -39,18 +42,19 @@ import java.io.File
 import java.util.Objects
 
 
-class HomeFragment : Fragment() {
+class LocalFragment : Fragment() {
 
-    private lateinit var localViewModel: HomeViewModel
+    //lateinit var localViewModel: LocalViewModel
     private lateinit var mainViewModel: MainViewModel
     private lateinit var localRefreshLayout: SwipeRefreshLayout
     private lateinit var localRecyclerView: RecyclerView
     private lateinit var sp: SharedPreferences
+    private lateinit var root: View
     lateinit var appCompatActivity: AppCompatActivity
     lateinit var appBar: ActionBar
     lateinit var layoutManager: AutoFitGridLayoutManager
-    private lateinit var adapter: LocalAdapter
-    private var position = 0
+    //private lateinit var adapter: LocalAdapter
+    //private var position = 0
     private val menuHost: MenuHost get() = requireActivity()
 
     @SuppressLint("UseSparseArrays")
@@ -59,10 +63,10 @@ class HomeFragment : Fragment() {
     var isListMode: Boolean = false
     var isBigMode: Boolean = false
 
-    fun HomeFragment() {}
+    fun LocalFragment() {}
 
     fun newInstance(index: Int) {
-        return HomeFragment()
+        return LocalFragment()
     }
 
 
@@ -101,7 +105,7 @@ class HomeFragment : Fragment() {
     savedInstanceState: Bundle?
     ): View {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
-        val root: View = binding.root
+        root = binding.root
 
         binding.localRefreshLayout.setColorSchemeResources(
             android.R.color.holo_blue_bright, android.R.color.holo_green_light,
@@ -118,7 +122,7 @@ class HomeFragment : Fragment() {
         adapter = LocalAdapter()
         binding.localRecyclerView.adapter = adapter
 
-        localViewModel = ViewModelProvider.AndroidViewModelFactory(App.instance!!).create(HomeViewModel::class.java)
+        localViewModel = ViewModelProvider.AndroidViewModelFactory(App.instance!!).create(LocalViewModel::class.java)
         localViewModel.allPoints.observe(viewLifecycleOwner, Observer<List<Folder>>
                 {points -> adapter.setPoints(points)
                 binding.localRefreshLayout.isRefreshing = false })
@@ -216,7 +220,6 @@ class HomeFragment : Fragment() {
                     npe.printStackTrace()
                 }
             }
-
         }
 
         adapter.setOnItemLongClickListener { point: Folder ->
@@ -347,4 +350,12 @@ class HomeFragment : Fragment() {
         super.onDestroyView()
         _binding = null
     }
+
+    companion object {
+        private const val TAG = "LocalFragment"
+        lateinit var localViewModel: LocalViewModel
+        private lateinit var adapter: LocalAdapter
+        private var position = 0
+    }
+
 }

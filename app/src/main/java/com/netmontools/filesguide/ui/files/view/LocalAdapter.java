@@ -1,19 +1,25 @@
 package com.netmontools.filesguide.ui.files.view;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.netmontools.filesguide.App;
 import com.netmontools.filesguide.R;
 import com.netmontools.filesguide.ui.files.model.Folder;
+import com.netmontools.filesguide.ui.files.view.LocalFragment;
 import com.netmontools.filesguide.utils.SimpleUtils;
 
 import java.io.File;
@@ -29,6 +35,7 @@ public class LocalAdapter extends RecyclerView.Adapter<LocalAdapter.LocalHolder>
     private OnItemClickListener listener;
     private OnItemLongClickListener longClickListener;
 
+    Context context;
     @NonNull
     @Override
     public LocalHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -57,7 +64,55 @@ public class LocalAdapter extends RecyclerView.Adapter<LocalAdapter.LocalHolder>
             }
         });
 
-        itemView.setOnLongClickListener(new View.OnLongClickListener() {
+        holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+
+                PopupMenu popupMenu = new PopupMenu(parent.getContext(),v);
+                popupMenu.getMenu().add("SCAN");
+                popupMenu.getMenu().add("DELETE");
+                popupMenu.getMenu().add("MOVE");
+                popupMenu.getMenu().add("RENAME");
+
+                int position = holder.getLayoutPosition();
+                if (longClickListener != null && position != RecyclerView.NO_POSITION) {
+                    longClickListener.onItemLongClick(points.get(position));
+                }
+
+                popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        if(item.getTitle().equals("SCAN")) {
+                            LocalFragment.localViewModel.scan(getPointAt(position));
+                        }
+
+                        if(item.getTitle().equals("DELETE")){
+                            boolean deleted = true;//selectedFile.delete();
+                            if(deleted){
+                                Toast.makeText(App.instance.getApplicationContext(),"DELETED ",Toast.LENGTH_SHORT).show();
+                                v.setVisibility(View.GONE);
+                            }
+                        }
+
+                        if(item.getTitle().equals("MOVE")){
+                            Toast.makeText(App.instance.getApplicationContext(),"MOVED ",Toast.LENGTH_SHORT).show();
+
+                        }
+
+                        if(item.getTitle().equals("RENAME")){
+                            Toast.makeText(App.instance.getApplicationContext(),"RENAME ",Toast.LENGTH_SHORT).show();
+
+                        }
+                        return true;
+                    }
+                });
+
+                popupMenu.show();
+                return true;
+            }
+        });
+
+        /*itemView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
                 int position = holder.getLayoutPosition();
@@ -66,7 +121,7 @@ public class LocalAdapter extends RecyclerView.Adapter<LocalAdapter.LocalHolder>
                 }
                 return false;
             }
-        });
+        });*/
 
         //return new LocalHolder(itemView);
         return holder;

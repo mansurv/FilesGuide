@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/navigation_home"
-        android:name="com.netmontools.filesguide.ui.files.view.HomeFragment"
+        android:name="com.netmontools.filesguide.ui.files.view.LocalFragment"
         android:label="@string/title_files"
         tools:layout="@layout/fragment_home" />
 
