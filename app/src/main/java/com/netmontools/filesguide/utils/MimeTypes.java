@@ -27,6 +27,7 @@ public final class MimeTypes {
         MIME_TYPES.put("properties", "text/plain");
         MIME_TYPES.put("epub", "application/epub+zip");
         MIME_TYPES.put("ibooks", "application/x-ibooks+zip");
+        MIME_TYPES.put("fb2", "text/xml");
 
         MIME_TYPES.put("ifb", "text/calendar");
         MIME_TYPES.put("eml", "message/rfc822");

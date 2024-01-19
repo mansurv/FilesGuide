@@ -4,9 +4,11 @@ package com.netmontools.filesguide.ui.files.view
 
 
 import android.annotation.SuppressLint
+import android.content.ContentResolver.MimeTypeInfo
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.net.Uri
 import android.os.Bundle
 import android.util.SparseArray
 import android.view.LayoutInflater
@@ -14,9 +16,7 @@ import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
-import android.view.View.OnLongClickListener
 import android.view.ViewGroup
-import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.ActionBar
@@ -37,7 +37,7 @@ import com.netmontools.filesguide.App
 import com.netmontools.filesguide.MainViewModel
 import com.netmontools.filesguide.databinding.FragmentHomeBinding
 import com.netmontools.filesguide.ui.files.model.Folder
-import com.netmontools.filesguide.utils.SimpleUtils
+import com.netmontools.filesguide.utils.MimeTypes
 import java.io.File
 import java.util.Objects
 
@@ -203,17 +203,21 @@ class LocalFragment : Fragment() {
                 try {
                     val file = File(point.getPathItem())
                     if (file.exists() && (file.isFile())) {
-                        val ext = SimpleUtils.getExtension(file.getName())
-                        if (ext.equals("fb2")) {
-                            val intent = Intent(Intent.ACTION_VIEW)
-                            //intent.setType("*.*/*.*")
-                            intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+
+                        //open thte file
+                        try {
+                            val intent = Intent()
+                            intent.setAction(Intent.ACTION_VIEW)
+                            val type = MimeTypes.getMimeType(file)
+                            intent.setDataAndType(Uri.parse(file.getAbsolutePath()), type)
                             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            val chosenIntent =
-                                Intent.createChooser(intent, "Choose file...")
-                            startActivity(chosenIntent)
-                        } else {
-                            SimpleUtils.openFile(App.instance!!, file)
+                            requireContext().startActivity(intent)
+                        } catch (e: Exception) {
+                            Toast.makeText(
+                                requireContext(),
+                                "Cannot open the file",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                     }
                 } catch (npe: NullPointerException) {

@@ -1,26 +1,20 @@
 package com.netmontools.filesguide
 
-import android.annotation.TargetApi
-import android.content.ContentValues.TAG
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.os.Environment
-import android.util.Log
-import android.view.View
-import androidx.activity.result.contract.ActivityResultContracts
-import com.google.android.material.bottomnavigation.BottomNavigationView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import androidx.preference.PreferenceManager
-import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.netmontools.filesguide.databinding.ActivityMainBinding
+import com.netmontools.filesguide.utils.PermissionUtils
 
 class MainActivity : AppCompatActivity() {
 
@@ -51,30 +45,57 @@ class MainActivity : AppCompatActivity() {
             supportActionBar?.title = it
         })
         val sp = PreferenceManager.getDefaultSharedPreferences(this)
-    }
 
-    fun View.showSnackbar(
-        view: View,
-        msg: String,
-        length: Int,
-        actionMessage: CharSequence?,
-        action: (View) -> Unit
-    ) {
-        val snackbar = Snackbar.make(view, msg, length)
-        if (actionMessage != null) {
-            snackbar.setAction(actionMessage) {
-                action(this)
-            }.show()
-        } else {
-            snackbar.show()
+        if (savedInstanceState == null) {
+            if (PermissionUtils.hasPermissions(this@MainActivity)) return
+            PermissionUtils.requestPermissions(this@MainActivity, MainActivity.PERMISSION_STORAGE)
         }
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == MainActivity.PERMISSION_STORAGE) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                if (PermissionUtils.hasPermissions(this)) {
+                    Toast.makeText(
+                        this,
+                        "Permission granted",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    Toast.makeText(
+                        this,
+                        "Permission not granted",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data)
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int, permissions: Array<String?>,
+        grantResults: IntArray
+    ) {
+        if (requestCode == MainActivity.PERMISSION_STORAGE) {
+            if (grantResults.size > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(
+                    this,
+                    "Permission granted",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } else {
+                Toast.makeText(
+                    this,
+                    "Permission not granted",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    }
+
     companion object {
-        private const val TAG = "MainActivity"
-        private const val REQUEST_STORAGE_PERMISSION = 101
-        private const val REQUEST_LOCATION_PERMISSION = 102
-        private const val REQUEST_STATE_PERMISSION = 103
-        private const val PLAY_SERVICES_RESOLUTION_REQUEST = 9000
+        private const val PERMISSION_STORAGE = 101
     }
 }
