@@ -7,7 +7,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
 import com.netmontools.filesguide.ui.files.model.Folder
-import com.netmontools.lookatnet.ui.local.repository.LocalRepository
+import com.netmontools.filesguide.ui.files.repo.LocalRepository
 import kotlinx.coroutines.launch
 import java.util.UUID
 

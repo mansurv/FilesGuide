@@ -3,8 +3,9 @@ package com.netmontools.filesguide.ui.files.view
 
 
 
+
 import android.annotation.SuppressLint
-import android.content.ContentResolver.MimeTypeInfo
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -21,12 +22,15 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.net.toUri
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.NavController
+import androidx.navigation.Navigation
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.GridLayoutManager
@@ -35,9 +39,11 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.netmontools.filesguide.App
 import com.netmontools.filesguide.MainViewModel
+import com.netmontools.filesguide.R
 import com.netmontools.filesguide.databinding.FragmentHomeBinding
 import com.netmontools.filesguide.ui.files.model.Folder
 import com.netmontools.filesguide.utils.MimeTypes
+import com.netmontools.filesguide.utils.SimpleUtils
 import java.io.File
 import java.util.Objects
 
@@ -45,6 +51,7 @@ import java.util.Objects
 class LocalFragment : Fragment() {
 
     //lateinit var localViewModel: LocalViewModel
+
     private lateinit var mainViewModel: MainViewModel
     private lateinit var localRefreshLayout: SwipeRefreshLayout
     private lateinit var localRecyclerView: RecyclerView
@@ -112,7 +119,6 @@ class LocalFragment : Fragment() {
             android.R.color.holo_orange_light, android.R.color.holo_red_light
         )
         binding.localRefreshLayout.isEnabled = false
-
         layoutManager = AutoFitGridLayoutManager(requireActivity(), 400)
         binding.localRecyclerView.layoutManager = layoutManager
         isListMode = false
@@ -200,31 +206,47 @@ class LocalFragment : Fragment() {
                 localViewModel.update(point)
                 mainViewModel.updateActionBarTitle(point.getNameItem())
             } else {
-                try {
-                    val file = File(point.getPathItem())
-                    if (file.exists() && (file.isFile())) {
+                val file = File(point.getPathItem())
+                if (file.exists() && (file.isFile())) {
+                        val ext = SimpleUtils.getExtension(file.name)
+                        val type = MimeTypes.getMimeType(file)
+                      if (ext.equals("jpg") || (ext.equals("jpeg") || (ext.equals("bmp")))) {
+                          val navController: NavController =
+                              Navigation.findNavController(requireActivity(),
+                                  R.id.nav_host_fragment_activity_main);
 
-                        //open thte file
-                        try {
-                            val intent = Intent()
-                            intent.setAction(Intent.ACTION_VIEW)
-                            val type = MimeTypes.getMimeType(file)
-                            intent.setDataAndType(Uri.parse(file.getAbsolutePath()), type)
-                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            requireContext().startActivity(intent)
-                        } catch (e: Exception) {
-                            Toast.makeText(
-                                requireContext(),
-                                "Cannot open the file",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    }
-                } catch (npe: NullPointerException) {
-                    npe.printStackTrace()
-                }
-            }
-        }
+                          val bundle : Bundle = Bundle()
+                          bundle.putString("arg", file.path.toString())
+                          navController
+                              .navigate(R.id.action_navigation_home_to_navigation_image, bundle)
+                      } else if (ext.equals("fb2")) {
+
+                          val viewIntent = Intent(Intent.ACTION_VIEW)
+                          viewIntent.setDataAndType(Uri.parse(file.path.toString()), "*/*")
+                          val chooserIntent = Intent.createChooser(viewIntent, "Open with...")
+                          startActivity(chooserIntent)
+
+                      } else {
+                          //open the file
+                          try {
+                              val intent = Intent()
+                              val type = MimeTypes.getMimeType(file)
+                              intent.setAction(Intent.ACTION_VIEW)
+                              //intent.setDataAndType(Uri.parse(file.getAbsolutePath()), type)
+                              intent.setDataAndType(file.path.toString().toUri(), type )
+                              intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                              requireContext().startActivity(intent)
+                          } catch (e: IllegalArgumentException) {
+                              Toast.makeText(
+                                  requireContext(),
+                                  "Cannot open the file" + e.message.toString(),
+                                  Toast.LENGTH_SHORT
+                              ).show()
+                          }//try
+                       }//else
+                }//if
+            }//else
+        }//adapter
 
         adapter.setOnItemLongClickListener { point: Folder ->
 

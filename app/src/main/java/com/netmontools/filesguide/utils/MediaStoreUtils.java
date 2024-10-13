@@ -1,5 +1,6 @@
 package com.netmontools.filesguide.utils;
 
+import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -30,7 +31,7 @@ public abstract class  MediaStoreUtils {
             values.put(MediaStore.MediaColumns.DATA, path);
             return resolver.insert(MediaStore.Files.getContentUri("external"), values);
         } else {
-            int imageId = filecursor.getInt(filecursor.getColumnIndex(BaseColumns._ID));
+            @SuppressLint("Range") int imageId = filecursor.getInt(filecursor.getColumnIndex(BaseColumns._ID));
             Uri uri = MediaStore.Files.getContentUri("external").buildUpon().appendPath(
                     Integer.toString(imageId)).build();
             filecursor.close();
