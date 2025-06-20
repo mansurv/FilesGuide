@@ -1,6 +1,5 @@
 package com.netmontools.filesguide.ui.files.repo
 
-import android.app.Application
 import android.os.Environment
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LiveData
@@ -16,7 +15,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -24,7 +22,7 @@ import java.nio.file.StandardCopyOption
 import java.util.Objects
 
 
-class LocalRepository(application: Application?) {
+class LocalRepository() {
     private val TAG = "LocalRepository"
 
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO

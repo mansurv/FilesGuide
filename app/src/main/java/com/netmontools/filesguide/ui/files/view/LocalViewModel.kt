@@ -1,17 +1,16 @@
 package com.netmontools.filesguide.ui.files.view
 
-import android.app.Application
 import android.graphics.drawable.Drawable
 import android.text.TextUtils
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.netmontools.filesguide.ui.files.model.Folder
 import com.netmontools.filesguide.ui.files.repo.LocalRepository
 import kotlinx.coroutines.launch
 import java.util.UUID
 
-class LocalViewModel(application: Application) : AndroidViewModel(application) {
+class LocalViewModel() : ViewModel() {
     private val folder: Folder? = null
     private val repository: LocalRepository
     var allPoints: LiveData<List<Folder>>
@@ -35,7 +34,7 @@ class LocalViewModel(application: Application) : AndroidViewModel(application) {
         get() = folder!!.image
 
     init {
-        repository = LocalRepository(application)
+        repository = LocalRepository()
             allPoints = repository.allPoints!!
     }
 
