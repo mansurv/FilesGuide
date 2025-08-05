@@ -1,25 +1,44 @@
 package com.netmontools.filesguide
 
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.net.toUri
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.findNavController
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.setupActionBarWithNavController
-import androidx.navigation.ui.setupWithNavController
 import androidx.preference.PreferenceManager
-import com.google.android.material.bottomnavigation.BottomNavigationView
+import androidx.recyclerview.widget.DefaultItemAnimator
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.netmontools.filesguide.databinding.ActivityMainBinding
+import com.netmontools.filesguide.ui.files.model.Folder
+import com.netmontools.filesguide.ui.files.view.LocalAdapter
+import com.netmontools.filesguide.ui.files.view.LocalViewModel
+import com.netmontools.filesguide.utils.MimeTypes
 import com.netmontools.filesguide.utils.PermissionUtils
+import com.netmontools.filesguide.utils.SimpleUtils
+import java.io.File
+
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private lateinit var viewModel: MainViewModel
+
+    private lateinit var mainViewModel: MainViewModel
+    private lateinit var localRefreshLayout: SwipeRefreshLayout
+    private lateinit var localRecyclerView: RecyclerView
+    lateinit var layoutManager: AutoFitGridLayoutManager
+    var isSelected: Boolean = false
+    var isListMode: Boolean = false
+    var isBigMode: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,24 +46,71 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val navView: BottomNavigationView = binding.navView
-
-        val navController = findNavController(R.id.nav_host_fragment_activity_main)
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
-        val appBarConfiguration = AppBarConfiguration(
-            setOf(
-                R.id.navigation_home,  R.id.navigation_dashboard,
-                R.id.navigation_notifications, R.id.navigation_image
-            )
+        binding.localRefreshLayout.setColorSchemeResources(
+            android.R.color.holo_blue_bright, android.R.color.holo_green_light,
+            android.R.color.holo_orange_light, android.R.color.holo_red_light
         )
-        setupActionBarWithNavController(navController, appBarConfiguration)
-        navView.setupWithNavController(navController)
+        binding.localRefreshLayout.isEnabled = false
+        layoutManager = AutoFitGridLayoutManager(this, 400)
+        binding.localRecyclerView.layoutManager = layoutManager
+        isListMode = false
+        binding.localRecyclerView.itemAnimator = DefaultItemAnimator()
+        binding.localRecyclerView.setHasFixedSize(true)
 
-        viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
-        viewModel.title.observe(this, {
-            supportActionBar?.title = it
-        })
+        adapter = LocalAdapter()
+        binding.localRecyclerView.adapter = adapter
+
+        localViewModel = ViewModelProvider.AndroidViewModelFactory(App.instance!!).create(LocalViewModel::class.java)
+        localViewModel.allPoints.observe(this, Observer<List<Folder>>
+        {points -> adapter.setPoints(points)
+            binding.localRefreshLayout.isRefreshing = false })
+
+
+        adapter.setOnItemClickListener { point ->
+            isSelected = false;
+            if(!point.isFile) {
+                binding.localRefreshLayout.setRefreshing(true)
+                localViewModel.update(point)
+                //mainViewModel.updateActionBarTitle(point.getNameItem())
+            } else {
+                val file = File(point.getPathItem())
+                if (file.exists() && (file.isFile())) {
+                    val ext = SimpleUtils.getExtension(file.name)
+                    val type = MimeTypes.getMimeType(file)
+                    if (ext.equals("jpg") || (ext.equals("jpeg") || (ext.equals("bmp")))) {
+                        val intent: Intent = Intent(this@MainActivity, ImageActivity::class.java)
+                        intent.setDataAndType(file.path.toString().toUri(), type )
+                        intent.putExtra("path", file.path)
+                        startActivity(intent)
+                    } else if (ext.equals("fb2")) {
+
+                        val viewIntent = Intent(Intent.ACTION_VIEW)
+                        viewIntent.setDataAndType(Uri.parse(file.path.toString()), "*/*")
+                        val chooserIntent = Intent.createChooser(viewIntent, "Open with...")
+                        startActivity(chooserIntent)
+
+                    } else {
+                        //open the file
+                        try {
+                            val intent = Intent()
+                            val type = MimeTypes.getMimeType(file)
+                            intent.setAction(Intent.ACTION_VIEW)
+                            //intent.setDataAndType(Uri.parse(file.getAbsolutePath()), type)
+                            intent.setDataAndType(file.path.toString().toUri(), type )
+                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            this.startActivity(intent)
+                        } catch (e: IllegalArgumentException) {
+                            Toast.makeText(
+                                this,
+                                "Cannot open the file" + e.message.toString(),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }//try
+                    }//else
+                }//if
+            }//else
+        }//adapter
+
         val sp = PreferenceManager.getDefaultSharedPreferences(this)
 
         if (savedInstanceState == null) {
@@ -97,7 +163,43 @@ class MainActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
+    class AutoFitGridLayoutManager(context: Context, columnWidth: Int) : GridLayoutManager(context, 1) {
+
+        private var columnWidth: Int = 0
+        private var columnWidthChanged = true
+
+        init {
+            setColumnWidth(columnWidth)
+        }
+
+        fun setColumnWidth(newColumnWidth: Int) {
+            if (newColumnWidth > 0 && newColumnWidth != columnWidth) {
+                columnWidth = newColumnWidth
+                columnWidthChanged = true
+            }
+        }
+
+        override fun onLayoutChildren(recycler: RecyclerView.Recycler?, state: RecyclerView.State) {
+            if (columnWidthChanged && columnWidth > 0) {
+                val totalSpace: Int
+                if (orientation == LinearLayoutManager.VERTICAL) {
+                    totalSpace = width - paddingRight - paddingLeft
+                } else {
+                    totalSpace = height - paddingTop - paddingBottom
+                }
+                val spanCount = Math.max(1, totalSpace / columnWidth)
+                setSpanCount(spanCount)
+                columnWidthChanged = false
+            }
+            super.onLayoutChildren(recycler, state)
+        }
+    }
+
     companion object {
         private const val PERMISSION_STORAGE = 101
+        private const val TAG = "MainActivity"
+        lateinit var localViewModel: LocalViewModel
+        private lateinit var adapter: LocalAdapter
+        private var position = 0
     }
 }

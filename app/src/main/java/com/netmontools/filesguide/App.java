@@ -26,21 +26,11 @@ public class App extends Application {
         folders.clear();
         ScanThread scanRootPath = new ScanThread();
         scanRootPath.start();
-
-
-        //database = Room.databaseBuilder(this, AppDatabase.class, "database")
-        //        .addMigrations(AppDatabase.MIGRATION_1_2)
-        //        .build();
-
     }
 
     public static App getInstance() {
         return instance;
     }
-
-    //public AppDatabase getDatabase() {
-    //    return database;
-    //}
 
     public class ScanThread extends Thread {
         @Override

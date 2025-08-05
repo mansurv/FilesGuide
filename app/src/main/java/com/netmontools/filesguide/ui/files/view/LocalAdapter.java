@@ -19,7 +19,6 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.netmontools.filesguide.App;
 import com.netmontools.filesguide.R;
 import com.netmontools.filesguide.ui.files.model.Folder;
-import com.netmontools.filesguide.ui.files.view.LocalFragment;
 import com.netmontools.filesguide.utils.SimpleUtils;
 
 import java.io.File;
@@ -83,7 +82,7 @@ public class LocalAdapter extends RecyclerView.Adapter<LocalAdapter.LocalHolder>
                     @Override
                     public boolean onMenuItemClick(MenuItem item) {
                         if(item.getTitle().equals("SCAN")) {
-                            LocalFragment.localViewModel.scan(getPointAt(position));
+                            //localViewModel.scan(getPointAt(position));
                         }
 
                         if(item.getTitle().equals("DELETE")){

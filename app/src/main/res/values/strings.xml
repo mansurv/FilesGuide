@@ -10,7 +10,5 @@
     <string name="property">Property</string>
     <string name="list_mode">List mode</string>
     <string name="big_icon_mode">Big image mode</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="title_image">Image</string>
 </resources>
