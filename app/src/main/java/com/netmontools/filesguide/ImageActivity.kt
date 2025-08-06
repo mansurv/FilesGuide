@@ -17,9 +17,5 @@ class ImageActivity : AppCompatActivity() {
         val path = getIntent().getStringExtra("path")
         imageView.setImage(ImageSource.uri(path!!))
 
-        // Получаем URI изображения из Intent'a
-//        val uri = intent?.data ?: return
-//        imageView.setImageURI(uri)
-
     }
 }

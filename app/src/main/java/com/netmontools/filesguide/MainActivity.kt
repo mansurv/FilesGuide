@@ -1,13 +1,17 @@
 package com.netmontools.filesguide
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Environment
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toUri
 import androidx.lifecycle.Observer
@@ -26,6 +30,7 @@ import com.netmontools.filesguide.utils.MimeTypes
 import com.netmontools.filesguide.utils.PermissionUtils
 import com.netmontools.filesguide.utils.SimpleUtils
 import java.io.File
+import java.util.Objects
 
 
 class MainActivity : AppCompatActivity() {
@@ -60,6 +65,17 @@ class MainActivity : AppCompatActivity() {
         adapter = LocalAdapter()
         binding.localRecyclerView.adapter = adapter
 
+        val sp = PreferenceManager.getDefaultSharedPreferences(this)
+
+        mainViewModel =
+            ViewModelProvider(this).get(MainViewModel::class.java
+            )
+        val actionBarTitle = App.rootPath
+        sp.edit().putString("root_path", actionBarTitle).apply()
+        //mainViewModel.updateActionBarTitle(actionBarTitle);
+
+
+
         localViewModel = ViewModelProvider.AndroidViewModelFactory(App.instance!!).create(LocalViewModel::class.java)
         localViewModel.allPoints.observe(this, Observer<List<Folder>>
         {points -> adapter.setPoints(points)
@@ -85,7 +101,7 @@ class MainActivity : AppCompatActivity() {
                     } else if (ext.equals("fb2")) {
 
                         val viewIntent = Intent(Intent.ACTION_VIEW)
-                        viewIntent.setDataAndType(Uri.parse(file.path.toString()), "*/*")
+                        viewIntent.setDataAndType(Uri.parse(file.path.toString()), "application/x-fictionbook+xml")
                         val chooserIntent = Intent.createChooser(viewIntent, "Open with...")
                         startActivity(chooserIntent)
 
@@ -111,15 +127,103 @@ class MainActivity : AppCompatActivity() {
             }//else
         }//adapter
 
-        val sp = PreferenceManager.getDefaultSharedPreferences(this)
-
         if (savedInstanceState == null) {
             if (PermissionUtils.hasPermissions(this@MainActivity)) return
             PermissionUtils.requestPermissions(this@MainActivity, MainActivity.PERMISSION_STORAGE)
+
+        } else {
+            val mode = savedInstanceState.getInt("mode")
+            isListMode = if (mode == 0) {
+                false
+            } else {
+                true
+            }
         }
     }
 
-    @Deprecated("This method has been deprecated in favor of using the Activity Result API\n      which brings increased type safety via an {@link ActivityResultContract} and the prebuilt\n      contracts for common intents available in\n      {@link androidx.activity.result.contract.ActivityResultContracts}, provides hooks for\n      testing, and allow receiving results in separate, testable classes independent from your\n      activity. Use\n      {@link #registerForActivityResult(ActivityResultContract, ActivityResultCallback)}\n      with the appropriate {@link ActivityResultContract} and handling the result in the\n      {@link ActivityResultCallback#onActivityResult(Object) callback}.")
+    fun onPrepareMenu(menu: Menu) {
+
+        if (!isListMode) {
+            menu.findItem(com.netmontools.filesguide.R.id.listMode).setIcon(com.netmontools.filesguide.R.drawable.baseline_view_list_yellow_24)
+        } else {
+            menu.findItem(com.netmontools.filesguide.R.id.listMode).setIcon(com.netmontools.filesguide.R.drawable.baseline_view_column_yellow_24)
+        }
+    }
+
+
+    override fun onCreateOptionsMenu (menu: Menu): Boolean {
+        val inflater = getMenuInflater()
+        inflater.inflate(R.menu.menu_main, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(menuItem: MenuItem): Boolean {
+        return when (menuItem.itemId) {
+            R.id.property-> {
+                if (menuItem.isChecked) {
+
+                    menuItem.setChecked(false)
+                } else {
+                    menuItem.setChecked(true)
+
+                }
+                true
+            }
+            R.id.listMode -> {
+                if (isListMode == false) {
+                    isListMode = true
+                    isBigMode = false
+                    binding.localRecyclerView.setLayoutManager(layoutManager)
+                    menuItem.setIcon(R.drawable.baseline_view_list_yellow_24)
+                } else {
+                    isListMode = false
+                    isBigMode = true
+                    binding.localRecyclerView.setLayoutManager(GridLayoutManager(this, 2));
+                    menuItem.setIcon(R.drawable.baseline_view_column_yellow_24)
+                }
+                true
+
+            }
+            else -> return true
+        }
+    }
+
+    @Deprecated("")
+    override fun onBackPressed() {
+
+        try {
+                var file: File? = null
+                if (App.previousPath != null) {
+                    file =  File(App.previousPath)
+                }
+                if (!file!!.getPath().equals(App.rootPath)) {
+                    if (file.exists()) {
+                        file = File(Objects.requireNonNull(file.getParent()))
+                        val fd: Folder = Folder()
+                        fd.isFile = file.isFile()
+                        fd.setNameItem(file.getName())
+                        fd.setPathItem(file.getPath())
+                        if (fd.isFile) {
+                            fd.setItemSize(file.length())
+                            //fd.setImageItem(App.file_image)
+                        } else {
+                            fd.setItemSize(0L)
+                            //fd.setImageItem(App.folder_image)
+                        }
+                        localViewModel.update(fd)
+                        binding.localRefreshLayout.setRefreshing(true)
+                        //mainViewModel.updateActionBarTitle(file.getName())
+                    }
+                } else {
+                    super.onBackPressed()
+                }
+
+            } catch (npe: NullPointerException) {
+                npe.printStackTrace();
+            }
+    }
+
+    @Deprecated("")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == MainActivity.PERMISSION_STORAGE) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -146,7 +250,7 @@ class MainActivity : AppCompatActivity() {
         grantResults: IntArray
     ) {
         if (requestCode == MainActivity.PERMISSION_STORAGE) {
-            if (grantResults.size > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(
                     this,
                     "Permission granted",
@@ -199,6 +303,7 @@ class MainActivity : AppCompatActivity() {
         private const val PERMISSION_STORAGE = 101
         private const val TAG = "MainActivity"
         lateinit var localViewModel: LocalViewModel
+        @SuppressLint("StaticFieldLeak")
         private lateinit var adapter: LocalAdapter
         private var position = 0
     }
