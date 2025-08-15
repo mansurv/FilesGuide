@@ -154,6 +154,7 @@ class LocalRepository() {
             file = File(point!!.path)
             App.previousPath = file.path
             if (file.exists()) {
+                App.currentPath = App.previousPath
                 if (file.isDirectory) {
                     dir = Folder()
                     dir.name = file.name
@@ -213,11 +214,13 @@ class LocalRepository() {
             val file = File(Environment.getExternalStorageDirectory().path)
             if (file.exists()) {
                 rootPath = file.path
+                App.currentPath = App.rootPath
                 dir = Folder()
                 dir.name = file.name
                 dir.path = file.path
                 for (f in Objects.requireNonNull(file.listFiles())) {
                     if (f.exists()) {
+
                         fd = Folder()
                         if (f.isDirectory) {
                             imageSelector(f)

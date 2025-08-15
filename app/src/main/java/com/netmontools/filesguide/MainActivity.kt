@@ -8,11 +8,10 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.Menu
-import android.view.MenuInflater
 import android.view.MenuItem
 import android.widget.Toast
-import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
@@ -70,9 +69,12 @@ class MainActivity : AppCompatActivity() {
         mainViewModel =
             ViewModelProvider(this).get(MainViewModel::class.java
             )
+        mainViewModel.title.observe(this, {
+            supportActionBar?.title = it
+        })
         val actionBarTitle = App.rootPath
-        sp.edit().putString("root_path", actionBarTitle).apply()
-        //mainViewModel.updateActionBarTitle(actionBarTitle);
+        sp.edit { putString("root_path", actionBarTitle) }
+        mainViewModel.updateActionBarTitle(actionBarTitle);
 
 
 
@@ -87,7 +89,7 @@ class MainActivity : AppCompatActivity() {
             if(!point.isFile) {
                 binding.localRefreshLayout.setRefreshing(true)
                 localViewModel.update(point)
-                //mainViewModel.updateActionBarTitle(point.getNameItem())
+                mainViewModel.updateActionBarTitle(point.getNameItem())
             } else {
                 val file = File(point.getPathItem())
                 if (file.exists() && (file.isFile())) {
@@ -143,7 +145,7 @@ class MainActivity : AppCompatActivity() {
 
     fun onPrepareMenu(menu: Menu) {
 
-        if (!isListMode) {
+        if (isListMode) {
             menu.findItem(com.netmontools.filesguide.R.id.listMode).setIcon(com.netmontools.filesguide.R.drawable.baseline_view_list_yellow_24)
         } else {
             menu.findItem(com.netmontools.filesguide.R.id.listMode).setIcon(com.netmontools.filesguide.R.drawable.baseline_view_column_yellow_24)
@@ -170,16 +172,20 @@ class MainActivity : AppCompatActivity() {
                 true
             }
             R.id.listMode -> {
+                val fd: Folder = Folder()
+                fd.setPathItem(App.currentPath)
                 if (isListMode == false) {
                     isListMode = true
                     isBigMode = false
                     binding.localRecyclerView.setLayoutManager(layoutManager)
                     menuItem.setIcon(R.drawable.baseline_view_list_yellow_24)
+                    localViewModel.update(fd)
                 } else {
                     isListMode = false
                     isBigMode = true
                     binding.localRecyclerView.setLayoutManager(GridLayoutManager(this, 2));
                     menuItem.setIcon(R.drawable.baseline_view_column_yellow_24)
+                    localViewModel.update(fd)
                 }
                 true
 
@@ -212,7 +218,7 @@ class MainActivity : AppCompatActivity() {
                         }
                         localViewModel.update(fd)
                         binding.localRefreshLayout.setRefreshing(true)
-                        //mainViewModel.updateActionBarTitle(file.getName())
+                        mainViewModel.updateActionBarTitle(file.getName())
                     }
                 } else {
                     super.onBackPressed()

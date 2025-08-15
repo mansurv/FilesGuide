@@ -16,7 +16,7 @@ public class App extends Application {
     //private AppDatabase database;
     public static ArrayList<Folder> folders = new ArrayList<Folder>();
     public static String[] share = null;
-    public static String rootPath, previousPath;//, remoteRootPath, remotePreviousPath, remoteCurrentPath;
+    public static String rootPath, currentPath, previousPath;//, remoteRootPath, remotePreviousPath, remoteCurrentPath;
 
     @Override
     public void onCreate() {
