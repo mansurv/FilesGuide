@@ -1,5 +1,7 @@
 package com.netmontools.filesguide.ui.files.view;
 
+import static com.netmontools.filesguide.MainActivity.localViewModel;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -82,7 +84,7 @@ public class LocalAdapter extends RecyclerView.Adapter<LocalAdapter.LocalHolder>
                     @Override
                     public boolean onMenuItemClick(MenuItem item) {
                         if(item.getTitle().equals("SCAN")) {
-                            //localViewModel.scan(getPointAt(position));
+                            localViewModel.scan(getPointAt(position));
                         }
 
                         if(item.getTitle().equals("DELETE")){
@@ -110,17 +112,6 @@ public class LocalAdapter extends RecyclerView.Adapter<LocalAdapter.LocalHolder>
                 return true;
             }
         });
-
-        /*itemView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                int position = holder.getLayoutPosition();
-                if (longClickListener != null && position != RecyclerView.NO_POSITION) {
-                    longClickListener.onItemLongClick(points.get(position));
-                }
-                return false;
-            }
-        });*/
 
         //return new LocalHolder(itemView);
         return holder;

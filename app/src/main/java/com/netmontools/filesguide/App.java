@@ -45,7 +45,7 @@ public class App extends Application {
             Folder fd;
             File file = new File("/");
             if (file.exists()) {
-                rootPath = file.getPath();
+                rootPath = currentPath = file.getPath();
                 for (File f : Objects.requireNonNull(file.listFiles())) {
                     if (f.exists()) {
                         fd = new Folder();
@@ -81,7 +81,7 @@ public class App extends Application {
                 Folder fd;
                 File file = new File(Environment.getExternalStorageDirectory().getPath());
                 if (file.exists()) {
-                    rootPath = file.getPath();
+                    rootPath = currentPath = file.getPath();
                     for (File f : Objects.requireNonNull(file.listFiles())) {
                         if (f.exists()) {
                             fd = new Folder();

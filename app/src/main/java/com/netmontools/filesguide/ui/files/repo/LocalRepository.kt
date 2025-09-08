@@ -30,8 +30,8 @@ class LocalRepository() {
     var allPoints: LiveData<List<Folder>>? = null
     private var liveData: MutableLiveData<List<Folder>>? = MutableLiveData<List<Folder>>()
 
-    var folder_image = ContextCompat.getDrawable(App.instance!!, R.drawable.baseline_folder_yellow_24);
-    var file_image = ContextCompat.getDrawable(App.instance!!, R.drawable.ic_file);
+    var folder_image = ContextCompat.getDrawable(App.instance!!, R.drawable.baseline_folder_yellow_24)!!
+    var file_image = ContextCompat.getDrawable(App.instance!!, R.drawable.ic_file)
     var rootPath: String? = null
     var previousPath: String? = null
 
@@ -51,7 +51,7 @@ class LocalRepository() {
                 }
             }
 
-            liveData!!.setValue(App.folders)
+            liveData!!.value = App.folders
             foldersApp = App.folders
 
         } catch (npe: NullPointerException) {
@@ -122,8 +122,8 @@ class LocalRepository() {
 
     fun scanItem(point: Folder?) {
         try {
-            var rootPath = point!!.getPathItem()
-            val folderPath = rootPath + "/Fb2Lib"
+            val rootPath = point!!.getPathItem()
+            val folderPath = rootPath + "/Books"
             val file = File(folderPath)
             if (!file.exists())
                 file.mkdir()
@@ -132,10 +132,13 @@ class LocalRepository() {
             val paths = Files.walk(scanPath)
                 .filter { item -> Files.isRegularFile(item) }
                 .filter { item -> item.toString().endsWith(".fb2") }
-                .forEach { item -> result.add(item.toString()) }
+                .forEach { item -> result.add(item.toString())}
             for (index in result.indices) {
                 val sourcePath = Paths.get(result.get(index))
-                val targetPath = Paths.get(folderPath + "/" + sourcePath.fileName)
+                val parentFileName = sourcePath.parent.fileName
+                val parentFile = File(folderPath + "/" + parentFileName)
+                parentFile.mkdir()
+                val targetPath = Paths.get(folderPath + "/" + parentFileName + "/" + sourcePath.fileName)
                 Files.move(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING)
             }
 
@@ -150,8 +153,7 @@ class LocalRepository() {
             folders.clear()
             var fd: Folder
             val dir: Folder
-            var file: File? = null
-            file = File(point!!.path)
+            var file = File(point!!.path)
             App.previousPath = file.path
             if (file.exists()) {
                 App.currentPath = App.previousPath
@@ -167,7 +169,7 @@ class LocalRepository() {
                             if (it.isDirectory) {
                                 fd.isFile = false
                                 fd.size = 0//SimpleUtils.getDirectorySize(it)
-                                fd.image = folder_image!!
+                                fd.image = folder_image
                                 fd.isImage = false
                                 fd.isVideo = false
                             } else {
@@ -224,14 +226,14 @@ class LocalRepository() {
                         fd = Folder()
                         if (f.isDirectory) {
                             imageSelector(f)
-                            fd.image = folder_image!!
+                            fd.image = folder_image
                             fd.name = f.name
                             fd.path = f.path
                             fd.isFile = false
                             fd.isChecked = false
                             fd.isImage = false
                             fd.isVideo = false
-                            fd.setItemSize(SimpleUtils.getDirectorySize(f));
+                            fd.setItemSize(SimpleUtils.getDirectorySize(f))
                             fd.size = 0L
                             folders.add(fd)
                         }
@@ -255,17 +257,17 @@ class LocalRepository() {
                                 ext.contentEquals("webp") ||
                                 ext.contentEquals("bmp")
                             ) {
-                                fd.isImage = true;
-                                fd.isVideo = false;
+                                fd.isImage = true
+                                fd.isVideo = false
                             } else if (ext.contentEquals("mp4") ||
                                 ext.contentEquals("avi") ||
                                 ext.contentEquals("mkv")
                             ) {
-                                fd.isImage = false;
-                                fd.isVideo = true;
+                                fd.isImage = false
+                                fd.isVideo = true
                             } else {
-                                fd.isImage = false;
-                                fd.isVideo = false;
+                                fd.isImage = false
+                                fd.isVideo = false
                             }
                             folders.add(fd)
                         }

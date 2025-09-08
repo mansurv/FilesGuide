@@ -23,6 +23,7 @@ public abstract class  MediaStoreUtils {
         Cursor filecursor = resolver.query(MediaStore.Files.getContentUri("external"),
                 new String[]{BaseColumns._ID}, MediaStore.MediaColumns.DATA + " = ?",
                 new String[]{path}, MediaStore.MediaColumns.DATE_ADDED + " desc");
+        assert filecursor != null;
         filecursor.moveToFirst();
 
         if (filecursor.isAfterLast()) {

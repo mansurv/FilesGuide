@@ -25,6 +25,7 @@ import com.netmontools.filesguide.databinding.ActivityMainBinding
 import com.netmontools.filesguide.ui.files.model.Folder
 import com.netmontools.filesguide.ui.files.view.LocalAdapter
 import com.netmontools.filesguide.ui.files.view.LocalViewModel
+import com.netmontools.filesguide.utils.MediaStoreUtils.getUriFromFile
 import com.netmontools.filesguide.utils.MimeTypes
 import com.netmontools.filesguide.utils.PermissionUtils
 import com.netmontools.filesguide.utils.SimpleUtils
@@ -94,37 +95,23 @@ class MainActivity : AppCompatActivity() {
                 val file = File(point.getPathItem())
                 if (file.exists() && (file.isFile())) {
                     val ext = SimpleUtils.getExtension(file.name)
-                    val type = MimeTypes.getMimeType(file)
-                    if (ext.equals("jpg") || (ext.equals("jpeg") || (ext.equals("bmp")))) {
-                        val intent: Intent = Intent(this@MainActivity, ImageActivity::class.java)
-                        intent.setDataAndType(file.path.toString().toUri(), type )
-                        intent.putExtra("path", file.path)
-                        startActivity(intent)
-                    } else if (ext.equals("fb2")) {
 
-                        val viewIntent = Intent(Intent.ACTION_VIEW)
-                        viewIntent.setDataAndType(Uri.parse(file.path.toString()), "application/x-fictionbook+xml")
-                        val chooserIntent = Intent.createChooser(viewIntent, "Open with...")
-                        startActivity(chooserIntent)
-
-                    } else {
-                        //open the file
-                        try {
-                            val intent = Intent()
-                            val type = MimeTypes.getMimeType(file)
-                            intent.setAction(Intent.ACTION_VIEW)
-                            //intent.setDataAndType(Uri.parse(file.getAbsolutePath()), type)
-                            intent.setDataAndType(file.path.toString().toUri(), type )
-                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            this.startActivity(intent)
-                        } catch (e: IllegalArgumentException) {
-                            Toast.makeText(
-                                this,
-                                "Cannot open the file" + e.message.toString(),
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }//try
-                    }//else
+                    //open the file
+                    try {
+                        val intent = Intent()
+                        val type = MimeTypes.getMimeType(file)
+                        val uri: Uri = getUriFromFile(file.path, this)
+                        intent.setAction(Intent.ACTION_VIEW)
+                        intent.setDataAndType(uri, type )
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        this.startActivity(intent)
+                    } catch (e: IllegalArgumentException) {
+                        Toast.makeText(
+                            this,
+                            "Cannot open the file" + e.message.toString(),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }//try
                 }//if
             }//else
         }//adapter
@@ -176,13 +163,13 @@ class MainActivity : AppCompatActivity() {
                 fd.setPathItem(App.currentPath)
                 if (isListMode == false) {
                     isListMode = true
-                    isBigMode = false
+                    //isBigMode = false
                     binding.localRecyclerView.setLayoutManager(layoutManager)
                     menuItem.setIcon(R.drawable.baseline_view_list_yellow_24)
                     localViewModel.update(fd)
                 } else {
                     isListMode = false
-                    isBigMode = true
+                    //isBigMode = true
                     binding.localRecyclerView.setLayoutManager(GridLayoutManager(this, 2));
                     menuItem.setIcon(R.drawable.baseline_view_column_yellow_24)
                     localViewModel.update(fd)
