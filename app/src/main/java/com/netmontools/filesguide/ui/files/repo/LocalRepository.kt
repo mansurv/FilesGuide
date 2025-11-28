@@ -15,11 +15,16 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.w3c.dom.Document
 import java.io.File
+import java.io.FileInputStream
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.util.Objects
+import java.util.Base64
+import java.util.UUID
+import javax.xml.parsers.DocumentBuilderFactory
 
 
 class LocalRepository() {
@@ -47,7 +52,7 @@ class LocalRepository() {
                 if(folder.isFile) {
                     folder.image = file_image!!
                 } else {
-                    folder.image = folder_image!!
+                    folder.image = folder_image
                 }
             }
 
@@ -59,6 +64,12 @@ class LocalRepository() {
         }
         allPoints = liveData
 
+    }
+
+    suspend fun open(item: Folder?) = withContext(ioDispatcher) {
+        coroutineScope {
+            launch { openItem(item) }
+        }
     }
 
     suspend fun scan(item: Folder?) = withContext(ioDispatcher) {
@@ -120,6 +131,114 @@ class LocalRepository() {
         }
     }
 
+    lateinit var coversDir: File
+
+    fun openItem(point: Folder?) {
+        try {
+            val rootPath = point!!.getPathItem()
+            coversDir = File(rootPath + "/Pictures")
+
+            if (!coversDir.exists())
+                coversDir.mkdir()
+            val scanPath = Paths.get(rootPath)
+            val result = arrayListOf<String>()
+            val paths = Files.walk(scanPath)
+                .filter { item -> Files.isRegularFile(item) }
+                .filter { item -> item.toString().endsWith(".fb2") }
+                .forEach { item -> result.add(item.toString())}
+            for (index in result.indices) {
+                val bookPath = Paths.get(result.get(index))
+                val parentFileName = bookPath.parent.fileName
+                val parentFile = File(rootPath + "/" + parentFileName)
+                val bookFileName = bookPath.fileName
+                val bookFile = File(rootPath + "/" + parentFileName + "/" + bookFileName)
+                try {
+                    saveBookCoverFromFb2(bookFile, coversDir)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+
+        } catch (npe: NullPointerException) {
+            npe.printStackTrace()
+            npe.message
+        }
+    }
+
+    fun saveBookCoverFromFb2(bookFile: File, coversDir: File) {
+        try {
+            // Пытаемся найти cover.jpg в том же каталоге что и FB2 файл
+            val bookParent = bookFile.parentFile
+            val coverFile = File(bookParent, "cover.jpg")
+
+            if (coverFile.exists() && coverFile.isFile) {
+                // Генерируем имя для сохранения обложки
+                val dateFolder = bookParent.name
+                val coverName = "$dateFolder-${bookFile.nameWithoutExtension}.jpg"
+                val targetCoverFile = File(coversDir, coverName)
+
+                // Копируем обложку
+                coverFile.copyTo(targetCoverFile, overwrite = true)
+                println("Обложка сохранена: $targetCoverFile")
+            } else {
+                // Если нет локального cover.jpg, пытаемся извлечь из FB2 XML
+                extractCoverFromFb2Xml(bookFile, coversDir)
+            }
+        } catch (e: Exception) {
+            println("Ошибка при обработке файла ${bookFile.name}: ${e.message}")
+        }
+    }
+
+    fun extractCoverFromFb2Xml(bookFile: File, coversDir: File) {
+        try {
+            val content = bookFile.readText(Charsets.UTF_8)
+
+            // Простой поиск по содержимому
+            val startMarker = "<binary"
+            val endMarker = "</binary>"
+
+            val startIndex = content.indexOf(startMarker)
+            if (startIndex != -1) {
+                val endIndex = content.indexOf(endMarker, startIndex)
+                if (endIndex != -1) {
+                    val base64Data = content.substring(startIndex, endIndex + endMarker.length)
+                        .replace(Regex("<binary[^>]*>"), "")
+                        .replace("</binary>", "")
+                        .trim()
+
+                    if (base64Data.isNotEmpty()) {
+                        try {
+                            val dateFolder = bookFile.parentFile.name
+                            val coverName = "$dateFolder-${bookFile.nameWithoutExtension}.jpg"
+                            val targetCoverFile = File(coversDir, coverName)
+
+                            val imageData = Base64.getDecoder().decode(base64Data)
+                            targetCoverFile.writeBytes(imageData)
+
+                            println("Обложка извлечена: $targetCoverFile")
+                        } catch (e: Exception) {
+                            println("Ошибка декодирования обложки: ${e.message}")
+                        }
+                    }
+                }
+            } else {
+                // Проверяем есть ли локальный cover.jpg файл
+                val bookParent = bookFile.parentFile
+                val localCover = File(bookParent, "cover.jpg")
+                if (localCover.exists()) {
+                    val dateFolder = bookFile.parentFile.name
+                    val coverName = "$dateFolder-${bookFile.nameWithoutExtension}.jpg"
+                    val targetCoverFile = File(coversDir, coverName)
+
+                    localCover.copyTo(targetCoverFile, overwrite = true)
+                    println("Обложка скопирована: $targetCoverFile")
+                }
+            }
+        } catch (e: Exception) {
+            println("Ошибка при извлечении обложки: ${e.message}")
+        }
+    }
+
     fun scanItem(point: Folder?) {
         try {
             val rootPath = point!!.getPathItem()
@@ -153,7 +272,7 @@ class LocalRepository() {
             folders.clear()
             var fd: Folder
             val dir: Folder
-            var file = File(point!!.path)
+            val file = File(point!!.path)
             App.previousPath = file.path
             if (file.exists()) {
                 App.currentPath = App.previousPath

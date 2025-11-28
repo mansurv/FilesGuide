@@ -13,10 +13,10 @@ import java.util.Objects;
 public class App extends Application {
 
     public static App instance;
-    //private AppDatabase database;
+
     public static ArrayList<Folder> folders = new ArrayList<Folder>();
     public static String[] share = null;
-    public static String rootPath, currentPath, previousPath;//, remoteRootPath, remotePreviousPath, remoteCurrentPath;
+    public static String rootPath, currentPath, previousPath;
 
     @Override
     public void onCreate() {

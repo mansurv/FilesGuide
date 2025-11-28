@@ -15,6 +15,10 @@ class LocalViewModel() : ViewModel() {
     private val repository: LocalRepository
     var allPoints: LiveData<List<Folder>>
 
+    fun open(folder: Folder?) {
+        viewModelScope.launch {repository.open(folder)}
+    }
+
     fun update(folder: Folder?) {
         viewModelScope.launch {repository.update(folder)}
     }

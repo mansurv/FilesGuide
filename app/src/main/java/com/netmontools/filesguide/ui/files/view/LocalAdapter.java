@@ -53,7 +53,6 @@ public class LocalAdapter extends RecyclerView.Adapter<LocalAdapter.LocalHolder>
            itemView = layoutInflater.inflate(R.layout.local_big_image_item, parent, false);
        }
 
-
         final LocalHolder holder = new LocalHolder(itemView);
         itemView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -70,10 +69,11 @@ public class LocalAdapter extends RecyclerView.Adapter<LocalAdapter.LocalHolder>
             public boolean onLongClick(View v) {
 
                 PopupMenu popupMenu = new PopupMenu(parent.getContext(),v);
+                popupMenu.getMenu().add("OPEN");
                 popupMenu.getMenu().add("SCAN");
-                popupMenu.getMenu().add("DELETE");
-                popupMenu.getMenu().add("MOVE");
-                popupMenu.getMenu().add("RENAME");
+//                popupMenu.getMenu().add("DELETE");
+//                popupMenu.getMenu().add("MOVE");
+//                popupMenu.getMenu().add("RENAME");
 
                 int position = holder.getLayoutPosition();
                 if (longClickListener != null && position != RecyclerView.NO_POSITION) {
@@ -83,27 +83,31 @@ public class LocalAdapter extends RecyclerView.Adapter<LocalAdapter.LocalHolder>
                 popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                     @Override
                     public boolean onMenuItemClick(MenuItem item) {
+                        if (item.getTitle().equals("OPEN")) {
+                            localViewModel.open(getPointAt(position));
+                        }
+
                         if(item.getTitle().equals("SCAN")) {
                             localViewModel.scan(getPointAt(position));
                         }
 
-                        if(item.getTitle().equals("DELETE")){
-                            boolean deleted = true;//selectedFile.delete();
-                            if(deleted){
-                                Toast.makeText(App.instance.getApplicationContext(),"DELETED ",Toast.LENGTH_SHORT).show();
-                                v.setVisibility(View.GONE);
-                            }
-                        }
-
-                        if(item.getTitle().equals("MOVE")){
-                            Toast.makeText(App.instance.getApplicationContext(),"MOVED ",Toast.LENGTH_SHORT).show();
-
-                        }
-
-                        if(item.getTitle().equals("RENAME")){
-                            Toast.makeText(App.instance.getApplicationContext(),"RENAME ",Toast.LENGTH_SHORT).show();
-
-                        }
+//                        if(item.getTitle().equals("DELETE")){
+//                            boolean deleted = true;//selectedFile.delete();
+//                            if(deleted){
+//                                Toast.makeText(App.instance.getApplicationContext(),"DELETED ",Toast.LENGTH_SHORT).show();
+//                                v.setVisibility(View.GONE);
+//                            }
+//                        }
+//
+//                        if(item.getTitle().equals("MOVE")){
+//                            Toast.makeText(App.instance.getApplicationContext(),"MOVED ",Toast.LENGTH_SHORT).show();
+//
+//                        }
+//
+//                        if(item.getTitle().equals("RENAME")){
+//                            Toast.makeText(App.instance.getApplicationContext(),"RENAME ",Toast.LENGTH_SHORT).show();
+//
+//                        }
                         return true;
                     }
                 });
