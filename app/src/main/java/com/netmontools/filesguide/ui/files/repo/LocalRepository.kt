@@ -145,6 +145,7 @@ class LocalRepository() {
                 val bookFileName = bookPath.fileName
                 val bookFile = File(rootPath + "/" + parentFileName + "/" + bookFileName)
                 try {
+                    extractRealBookTitle(bookFile)
                     saveBookCoverFromFb2(bookFile, coversDir)
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -154,6 +155,45 @@ class LocalRepository() {
         } catch (npe: NullPointerException) {
             npe.printStackTrace()
             npe.message
+        }
+    }
+
+    fun extractRealBookTitle(bookFile: File)
+    {
+        try {
+            val content = bookFile.readText(Charsets.UTF_8)
+
+            // Простой поиск по содержимому
+            val startMarker = "<book-title"
+            val endMarker = "</book-title>"
+
+
+            val startIndex = content.indexOf(startMarker)
+            if (startIndex != -1) {
+                val endIndex = content.indexOf(endMarker, startIndex)
+                if (endIndex != -1) {
+                    val bookTitle = content.substring(startIndex, endIndex + endMarker.length)
+                        .replace(Regex("<book-title[^>]*>"), "")
+                        .replace("</book-title>", "")
+                        .trim()
+
+                    if (bookTitle.isNotEmpty()) {
+                        try {
+                            if (!bookFile.nameWithoutExtension.equals(bookTitle)) {
+                                val bookFileParentPath = bookFile.parentFile!!.path
+                                val newBookFileName = bookFileParentPath + "/" + bookTitle + ".фб2"
+                                 bookFile.renameTo(File(newBookFileName))
+                            }
+
+
+                        } catch (e: Exception) {
+                            println("Ошибка: ${e.message}")
+                        }
+                    }
+                }
+            }
+        }catch (e: Exception) {
+            println("Ошибка: ${e.message}")
         }
     }
 
