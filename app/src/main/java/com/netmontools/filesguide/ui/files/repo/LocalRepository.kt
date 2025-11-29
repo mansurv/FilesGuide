@@ -9,26 +9,19 @@ import com.netmontools.filesguide.R
 import com.netmontools.filesguide.ui.files.model.Folder
 import com.netmontools.filesguide.utils.SimpleUtils
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.w3c.dom.Document
 import java.io.File
-import java.io.FileInputStream
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
-import java.util.Objects
 import java.util.Base64
-import java.util.UUID
-import javax.xml.parsers.DocumentBuilderFactory
+import java.util.Objects
 
 
 class LocalRepository() {
-    private val TAG = "LocalRepository"
 
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
     private val mainDispatcher: CoroutineDispatcher = Dispatchers.Main
@@ -42,8 +35,6 @@ class LocalRepository() {
 
     var folders = ArrayList<Folder>()
     var foldersApp = ArrayList<Folder>()
-
-    private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     init {
 
@@ -82,13 +73,13 @@ class LocalRepository() {
         coroutineScope {
             launch {updateItem(item)}
         }
-        PostUpdate()
+        postUpdate()
     }
     fun getAll(): LiveData<List<Folder>>? {
         return allPoints
     }
 
-    suspend fun PostUpdate()  = withContext(mainDispatcher) {
+    suspend fun postUpdate()  = withContext(mainDispatcher) {
         liveData!!.value = folders
         allPoints = liveData
     }
@@ -142,6 +133,7 @@ class LocalRepository() {
                 coversDir.mkdir()
             val scanPath = Paths.get(rootPath)
             val result = arrayListOf<String>()
+            val maxDepth = 4
             val paths = Files.walk(scanPath)
                 .filter { item -> Files.isRegularFile(item) }
                 .filter { item -> item.toString().endsWith(".fb2") }
@@ -149,7 +141,7 @@ class LocalRepository() {
             for (index in result.indices) {
                 val bookPath = Paths.get(result.get(index))
                 val parentFileName = bookPath.parent.fileName
-                val parentFile = File(rootPath + "/" + parentFileName)
+                File(rootPath + "/" + parentFileName)
                 val bookFileName = bookPath.fileName
                 val bookFile = File(rootPath + "/" + parentFileName + "/" + bookFileName)
                 try {
@@ -173,7 +165,7 @@ class LocalRepository() {
 
             if (coverFile.exists() && coverFile.isFile) {
                 // Генерируем имя для сохранения обложки
-                val dateFolder = bookParent.name
+                val dateFolder = bookParent!!.name
                 val coverName = "$dateFolder-${bookFile.nameWithoutExtension}.jpg"
                 val targetCoverFile = File(coversDir, coverName)
 
@@ -197,6 +189,7 @@ class LocalRepository() {
             val startMarker = "<binary"
             val endMarker = "</binary>"
 
+
             val startIndex = content.indexOf(startMarker)
             if (startIndex != -1) {
                 val endIndex = content.indexOf(endMarker, startIndex)
@@ -208,7 +201,7 @@ class LocalRepository() {
 
                     if (base64Data.isNotEmpty()) {
                         try {
-                            val dateFolder = bookFile.parentFile.name
+                            val dateFolder = bookFile.parentFile!!.name
                             val coverName = "$dateFolder-${bookFile.nameWithoutExtension}.jpg"
                             val targetCoverFile = File(coversDir, coverName)
 
@@ -226,7 +219,7 @@ class LocalRepository() {
                 val bookParent = bookFile.parentFile
                 val localCover = File(bookParent, "cover.jpg")
                 if (localCover.exists()) {
-                    val dateFolder = bookFile.parentFile.name
+                    val dateFolder = bookFile.parentFile!!.name
                     val coverName = "$dateFolder-${bookFile.nameWithoutExtension}.jpg"
                     val targetCoverFile = File(coversDir, coverName)
 
@@ -370,7 +363,7 @@ class LocalRepository() {
                             imageSelector(f)
                             fd.image =file_image!!
 
-                            val ext: String = SimpleUtils.getExtension(f.getName());
+                            val ext: String = SimpleUtils.getExtension(f.getName())
                             if (ext.contentEquals("jpg") ||
                                 ext.contentEquals("png") ||
                                 ext.contentEquals("webp") ||
@@ -399,8 +392,7 @@ class LocalRepository() {
     }
     companion object {
 
-       var folders = ArrayList<Folder>()
-       var rootPath: String? = null
+        var rootPath: String? = null
        var previousPath: String? = null
    }
 }

@@ -3,7 +3,6 @@ package com.netmontools.filesguide.ui.files.view;
 import static com.netmontools.filesguide.MainActivity.localViewModel;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -11,14 +10,12 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.netmontools.filesguide.App;
 import com.netmontools.filesguide.R;
 import com.netmontools.filesguide.ui.files.model.Folder;
 import com.netmontools.filesguide.utils.SimpleUtils;
@@ -36,7 +33,6 @@ public class LocalAdapter extends RecyclerView.Adapter<LocalAdapter.LocalHolder>
     private OnItemClickListener listener;
     private OnItemLongClickListener longClickListener;
 
-    Context context;
     @NonNull
     @Override
     public LocalHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
