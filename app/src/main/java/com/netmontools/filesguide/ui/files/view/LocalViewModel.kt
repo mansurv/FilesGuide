@@ -22,10 +22,14 @@ class LocalViewModel() : ViewModel() {
     fun update(folder: Folder?) {
         viewModelScope.launch {repository.update(folder)}
     }
-
-    fun scan(folder: Folder?) {
-        viewModelScope.launch {repository.scan(folder)}
+    fun delete(folder: Folder?) {
+        viewModelScope.launch {repository.delete(folder)}
     }
+
+    fun rename(folder: Folder?) {
+        viewModelScope.launch {repository.rename(folder)}
+    }
+
     val id: UUID
         get() = folder!!.id
     val name: String

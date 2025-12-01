@@ -63,9 +63,15 @@ class LocalRepository() {
         }
     }
 
-    suspend fun scan(item: Folder?) = withContext(ioDispatcher) {
+    suspend fun rename(item: Folder?) = withContext(ioDispatcher) {
         coroutineScope {
-            launch { scanItem(item) }
+            launch { renameItem(item) }
+        }
+    }
+
+    suspend fun delete(item: Folder?) = withContext(ioDispatcher) {
+        coroutineScope {
+            launch { deleteItem(item) }
         }
     }
 
@@ -127,7 +133,7 @@ class LocalRepository() {
     fun openItem(point: Folder?) {
         try {
             val rootPath = point!!.getPathItem()
-            coversDir = File(rootPath + "/Pictures")
+            coversDir = File("$rootPath/Covers")
 
             if (!coversDir.exists())
                 coversDir.mkdir()
@@ -141,11 +147,10 @@ class LocalRepository() {
             for (index in result.indices) {
                 val bookPath = Paths.get(result.get(index))
                 val parentFileName = bookPath.parent.fileName
-                File(rootPath + "/" + parentFileName)
+                File("$rootPath/$parentFileName")
                 val bookFileName = bookPath.fileName
-                val bookFile = File(rootPath + "/" + parentFileName + "/" + bookFileName)
+                val bookFile = File("$rootPath/$parentFileName/$bookFileName")
                 try {
-                    extractRealBookTitle(bookFile)
                     saveBookCoverFromFb2(bookFile, coversDir)
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -158,12 +163,111 @@ class LocalRepository() {
         }
     }
 
+
+
+    fun saveBookCoverFromFb2(bookFile: File, coversDir: File) {
+        try {
+            // Пытаемся найти cover.jpg в том же каталоге что и FB2 файл
+            val bookParent = bookFile.parentFile
+            val coverFile = File(bookParent, "cover.jpg")
+
+            if (coverFile.exists() && coverFile.isFile) {
+
+                val dateFolder = bookParent!!.name
+                val coverName = "$dateFolder-${bookFile.nameWithoutExtension}.jpg"
+                val targetCoverFile = File(coversDir, coverName)
+
+
+                coverFile.copyTo(targetCoverFile, overwrite = true)
+                println("Cover saved: $targetCoverFile")
+            } else {
+
+                extractCoverFromFb2Xml(bookFile, coversDir)
+            }
+        } catch (e: Exception) {
+            println("Error cover saved: ${bookFile.name}: ${e.message}")
+        }
+    }
+
+    fun extractCoverFromFb2Xml(bookFile: File, coversDir: File) {
+        try {
+            var content: String? = null
+            content = bookFile.readText(Charsets.UTF_8)
+
+            val startMarker = "<binary"
+            val endMarker = "</binary>"
+
+
+            val startIndex = content.indexOf(startMarker)
+            if (startIndex != -1) {
+                val endIndex = content.indexOf(endMarker, startIndex)
+                if (endIndex != -1) {
+                    val base64Data = content.substring(startIndex, endIndex + endMarker.length)
+                        .replace(Regex("<binary[^>]*>"), "")
+                        .replace("</binary>", "")
+                        .trim()
+
+                    if (base64Data.isNotEmpty()) {
+                        try {
+                            // Показываем первые несколько символов для отладки
+                            println("Первые 100 символов Base64: ${base64Data.take(100)}")
+                            println("Длина данных: ${base64Data.length}")
+
+                            val dateFolder = bookFile.parentFile?.name
+                            val coverName = "$dateFolder-${bookFile.nameWithoutExtension}.jpg"
+                            val targetCoverFile = File(coversDir, coverName)
+
+                            // Убираем все непечатаемые символы и пробелы из Base64 данных
+                            val cleanBase64 = base64Data.filter { it.isLetterOrDigit() || it in "+/=" }
+                            println("Очищенные данные: ${cleanBase64.take(100)}")
+
+                            if (cleanBase64.isNotEmpty()) {
+                                val imageData = Base64.getDecoder().decode(cleanBase64)
+                                targetCoverFile.writeBytes(imageData)
+                                println("Обложка извлечена: $targetCoverFile")
+                            } else {
+                                println("Очистить Base64 данные пустые!")
+                            }
+                        } catch (e: Exception) {
+                            println("Ошибка декодирования обложки: ${e.message}")
+                            e.printStackTrace()
+                        }
+                    }
+                }
+            } else {
+                val bookParent = bookFile.parentFile
+                val localCover = File(bookParent, "cover.jpg")
+                if (localCover.exists()) {
+                    val dateFolder = bookFile.parentFile!!.name
+                    val coverName = "$dateFolder-${bookFile.nameWithoutExtension}.jpg"
+                    val targetCoverFile = File(coversDir, coverName)
+
+                    localCover.copyTo(targetCoverFile, overwrite = true)
+                    println("Cover copeed: $targetCoverFile")
+                }
+            }
+        } catch (e: Exception) {
+            println("Error cover copeed: ${e.message}")
+        }
+    }
+
+    fun renameItem(point: Folder?) {
+        try {
+            val rootPath = point!!.getPathItem()
+            val bookFile = File(rootPath)
+            extractRealBookTitle(bookFile)
+
+        } catch (npe: NullPointerException) {
+            npe.printStackTrace()
+            npe.message
+        }
+    }
+
     fun extractRealBookTitle(bookFile: File)
     {
         try {
             val content = bookFile.readText(Charsets.UTF_8)
 
-            // Простой поиск по содержимому
             val startMarker = "<book-title"
             val endMarker = "</book-title>"
 
@@ -181,118 +285,27 @@ class LocalRepository() {
                         try {
                             if (!bookFile.nameWithoutExtension.equals(bookTitle)) {
                                 val bookFileParentPath = bookFile.parentFile!!.path
-                                val newBookFileName = bookFileParentPath + "/" + bookTitle + ".фб2"
-                                 bookFile.renameTo(File(newBookFileName))
+                                val newBookFileName = "$bookFileParentPath/$bookTitle.фб2"
+                                bookFile.renameTo(File(newBookFileName))
                             }
 
 
                         } catch (e: Exception) {
-                            println("Ошибка: ${e.message}")
+                            println("Error: ${e.message}")
                         }
                     }
                 }
             }
         }catch (e: Exception) {
-            println("Ошибка: ${e.message}")
+            println("Error: ${e.message}")
         }
     }
 
-    fun saveBookCoverFromFb2(bookFile: File, coversDir: File) {
-        try {
-            // Пытаемся найти cover.jpg в том же каталоге что и FB2 файл
-            val bookParent = bookFile.parentFile
-            val coverFile = File(bookParent, "cover.jpg")
-
-            if (coverFile.exists() && coverFile.isFile) {
-                // Генерируем имя для сохранения обложки
-                val dateFolder = bookParent!!.name
-                val coverName = "$dateFolder-${bookFile.nameWithoutExtension}.jpg"
-                val targetCoverFile = File(coversDir, coverName)
-
-                // Копируем обложку
-                coverFile.copyTo(targetCoverFile, overwrite = true)
-                println("Обложка сохранена: $targetCoverFile")
-            } else {
-                // Если нет локального cover.jpg, пытаемся извлечь из FB2 XML
-                extractCoverFromFb2Xml(bookFile, coversDir)
-            }
-        } catch (e: Exception) {
-            println("Ошибка при обработке файла ${bookFile.name}: ${e.message}")
-        }
-    }
-
-    fun extractCoverFromFb2Xml(bookFile: File, coversDir: File) {
-        try {
-            val content = bookFile.readText(Charsets.UTF_8)
-
-            // Простой поиск по содержимому
-            val startMarker = "<binary"
-            val endMarker = "</binary>"
-
-
-            val startIndex = content.indexOf(startMarker)
-            if (startIndex != -1) {
-                val endIndex = content.indexOf(endMarker, startIndex)
-                if (endIndex != -1) {
-                    val base64Data = content.substring(startIndex, endIndex + endMarker.length)
-                        .replace(Regex("<binary[^>]*>"), "")
-                        .replace("</binary>", "")
-                        .trim()
-
-                    if (base64Data.isNotEmpty()) {
-                        try {
-                            val dateFolder = bookFile.parentFile!!.name
-                            val coverName = "$dateFolder-${bookFile.nameWithoutExtension}.jpg"
-                            val targetCoverFile = File(coversDir, coverName)
-
-                            val imageData = Base64.getDecoder().decode(base64Data)
-                            targetCoverFile.writeBytes(imageData)
-
-                            println("Обложка извлечена: $targetCoverFile")
-                        } catch (e: Exception) {
-                            println("Ошибка декодирования обложки: ${e.message}")
-                        }
-                    }
-                }
-            } else {
-                // Проверяем есть ли локальный cover.jpg файл
-                val bookParent = bookFile.parentFile
-                val localCover = File(bookParent, "cover.jpg")
-                if (localCover.exists()) {
-                    val dateFolder = bookFile.parentFile!!.name
-                    val coverName = "$dateFolder-${bookFile.nameWithoutExtension}.jpg"
-                    val targetCoverFile = File(coversDir, coverName)
-
-                    localCover.copyTo(targetCoverFile, overwrite = true)
-                    println("Обложка скопирована: $targetCoverFile")
-                }
-            }
-        } catch (e: Exception) {
-            println("Ошибка при извлечении обложки: ${e.message}")
-        }
-    }
-
-    fun scanItem(point: Folder?) {
+    fun deleteItem(point: Folder?) {
         try {
             val rootPath = point!!.getPathItem()
-            val folderPath = rootPath + "/Books"
-            val file = File(folderPath)
-            if (!file.exists())
-                file.mkdir()
-            val scanPath = Paths.get(rootPath)
-            val result = arrayListOf<String>()
-            val paths = Files.walk(scanPath)
-                .filter { item -> Files.isRegularFile(item) }
-                .filter { item -> item.toString().endsWith(".fb2") }
-                .forEach { item -> result.add(item.toString())}
-            for (index in result.indices) {
-                val sourcePath = Paths.get(result.get(index))
-                val parentFileName = sourcePath.parent.fileName
-                val parentFile = File(folderPath + "/" + parentFileName)
-                parentFile.mkdir()
-                val targetPath = Paths.get(folderPath + "/" + parentFileName + "/" + sourcePath.fileName)
-                Files.move(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING)
-            }
+            val file = File(rootPath)
+            //file.delete()
 
         } catch (npe: NullPointerException) {
             npe.printStackTrace()
